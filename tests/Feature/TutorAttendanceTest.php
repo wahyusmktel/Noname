@@ -218,5 +218,58 @@ class TutorAttendanceTest extends TestCase
         $response->assertSessionHasErrors(['documentation_photo']);
         $this->assertDatabaseCount('attendance_sessions', 0);
     }
+
+    public function test_tutor_without_specialization_requires_subject_selection(): void
+    {
+        // Set specialization tentor ke null
+        $this->tentor->update(['specialization' => null]);
+
+        $payload = [
+            'date'                => '2026-09-14',
+            'study_group_id'      => $this->studyGroup->id,
+            'subject_name'        => null, // Tidak memilih mata pelajaran
+            'topic_description'   => 'Membahas bab baru',
+            'documentation_photo' => UploadedFile::fake()->image('dokumentasi.jpg'),
+            'attendances'         => [
+                [
+                    'student_id' => $this->student1->id,
+                    'status'     => 'present',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->tutorUser)->post('/tutor/attendance', $payload);
+        $response->assertSessionHasErrors(['subject_name']);
+        $this->assertDatabaseCount('attendance_sessions', 0);
+    }
+
+    public function test_tutor_without_specialization_can_choose_subject(): void
+    {
+        // Set specialization tentor ke null
+        $this->tentor->update(['specialization' => null]);
+
+        $payload = [
+            'date'                => '2026-09-14',
+            'study_group_id'      => $this->studyGroup->id,
+            'subject_name'        => 'Fisika Kuantum & IPA',
+            'topic_description'   => 'Membahas mekanika gerak parabola',
+            'documentation_photo' => UploadedFile::fake()->image('dokumentasi.jpg'),
+            'attendances'         => [
+                [
+                    'student_id' => $this->student1->id,
+                    'status'     => 'present',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->tutorUser)->post('/tutor/attendance', $payload);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('attendance_sessions', 1);
+
+        $this->assertDatabaseHas('attendance_sessions', [
+            'subject_name' => 'Fisika Kuantum & IPA',
+            'topic_description' => 'Membahas mekanika gerak parabola',
+        ]);
+    }
 }
 

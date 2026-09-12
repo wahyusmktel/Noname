@@ -55,14 +55,20 @@ interface RecentSessionItem {
     photo_url: string | null;
 }
 
+interface SubjectItem {
+    id: string;
+    name: string;
+}
+
 interface Props {
     tentor: {
         id: string | null;
         name: string;
-        specialization: string;
+        specialization: string | null;
         phone: string | null;
         photo_url: string | null;
     };
+    subjects?: SubjectItem[];
     study_groups: StudyGroupItem[];
     recent_sessions: RecentSessionItem[];
     active_academic_year: string | null;
@@ -71,6 +77,23 @@ interface Props {
 
 const props = defineProps<Props>();
 const { toast, confirmAction } = useNotification();
+
+// ==========================================
+// STATE SPESIALISASI / MATA PELAJARAN
+// ==========================================
+const hasAssignedSubject = computed(() => {
+    return !!(props.tentor.specialization && props.tentor.specialization.trim());
+});
+
+const selectedSubjectName = ref<string>(props.tentor.specialization || '');
+
+// Opsi mata pelajaran untuk SearchableSelect (jika belum diatur)
+const subjectOptions = computed<SelectOption[]>(() => {
+    return (props.subjects || []).map(s => ({
+        value: s.name,
+        label: s.name,
+    }));
+});
 
 // ==========================================
 // STATE FILTER JENJANG & KELOMPOK
@@ -120,9 +143,14 @@ const studentsList = ref<AttendanceEntry[]>([]);
 const form = useForm({
     date: props.today_date,
     study_group_id: '',
+    subject_name: props.tentor.specialization || '',
     topic_description: '',
     documentation_photo: null as File | null,
     attendances: [] as { student_id: string; status: 'present' | 'absent' }[],
+});
+
+watch(selectedSubjectName, (newSubject) => {
+    form.subject_name = newSubject;
 });
 
 // Ketika kelompok dipilih, muat daftar siswa
@@ -290,6 +318,11 @@ const removePhoto = () => {
 // SUBMIT FORM DENGAN SWEETALERT2
 // ==========================================
 const submitAttendance = async () => {
+    if (!hasAssignedSubject.value && !form.subject_name) {
+        toast('Silakan pilih mata pelajaran terlebih dahulu.', 'warning');
+        return;
+    }
+
     if (!form.study_group_id) {
         toast('Silakan pilih jenjang dan kelompok bimbel terlebih dahulu.', 'warning');
         return;
@@ -340,6 +373,10 @@ const submitAttendance = async () => {
             removePhoto();
             selectedGroupId.value = '';
             selectedEducationLevel.value = '';
+            if (!hasAssignedSubject.value) {
+                selectedSubjectName.value = '';
+                form.subject_name = '';
+            }
         },
         onError: (errors: any) => {
             toast(errors.error || 'Gagal menyimpan absensi. Periksa kembali formulir.', 'error');
@@ -436,12 +473,21 @@ const submitAttendance = async () => {
                             </div>
                         </div>
 
-                        <!-- 3. Mata Pelajaran (Read Only) -->
+                        <!-- 3. Mata Pelajaran (Read Only jika sudah diatur, atau SearchableSelect jika belum diatur) -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">
-                                3. Mata Pelajaran / Keahlian <span class="text-slate-400 font-normal">(Otomatis Sesuai Akun)</span>
-                            </label>
-                            <div class="relative">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-bold text-slate-700">
+                                    3. Mata Pelajaran / Keahlian 
+                                    <span v-if="hasAssignedSubject" class="text-slate-400 font-normal">(Otomatis Sesuai Akun)</span>
+                                    <span v-else class="text-rose-500">*</span>
+                                </label>
+                                <span v-if="!hasAssignedSubject" class="text-[10px] text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                                    Pilih Mata Pelajaran
+                                </span>
+                            </div>
+
+                            <!-- Readonly jika sudah terisi di profil guru -->
+                            <div v-if="hasAssignedSubject" class="relative">
                                 <BookOpen class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                                 <input
                                     :value="tentor.specialization"
@@ -449,6 +495,19 @@ const submitAttendance = async () => {
                                     readonly
                                     class="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-100/80 border border-slate-200 rounded-xl font-bold text-slate-700 cursor-not-allowed select-none"
                                 />
+                            </div>
+
+                            <!-- SearchableSelect dengan form pencarian jika belum diatur di profil guru -->
+                            <div v-else>
+                                <SearchableSelect
+                                    v-model="selectedSubjectName"
+                                    :options="subjectOptions"
+                                    :all-option="false"
+                                    placeholder="-- Cari & Pilih Mata Pelajaran --"
+                                    search-placeholder="Ketik nama mata pelajaran..."
+                                    :icon="BookOpen"
+                                />
+                                <p v-if="form.errors.subject_name" class="text-xs text-rose-500 mt-1">{{ form.errors.subject_name }}</p>
                             </div>
                         </div>
 

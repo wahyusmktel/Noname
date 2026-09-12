@@ -6,6 +6,7 @@ use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Models\StudyGroup;
+use App\Models\Subject;
 use App\Models\Tentor;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
@@ -96,14 +97,25 @@ class TutorAttendanceController extends Controller
                 ]);
         }
 
+        // Ambil daftar mata pelajaran aktif untuk pilihan jika guru belum diatur mata pelajarannya
+        $subjects = Subject::query()
+            ->where('is_active', true)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name'])
+            ->map(fn ($sub) => [
+                'id'   => $sub->id,
+                'name' => $sub->name,
+            ]);
+
         return Inertia::render('Tutor/Attendance/Create', [
             'tentor' => [
                 'id'             => $tentor ? $tentor->id : null,
                 'name'           => $tentor ? $tentor->full_name : $user->name,
-                'specialization' => $tentor && $tentor->specialization ? $tentor->specialization : 'Mata Pelajaran Umum',
+                'specialization' => ($tentor && !empty(trim($tentor->specialization ?? ''))) ? $tentor->specialization : null,
                 'phone'          => $tentor ? $tentor->phone : $user->phone,
                 'photo_url'      => $tentor ? $tentor->photo_url : null,
             ],
+            'subjects'            => $subjects,
             'study_groups'        => $studyGroups,
             'recent_sessions'     => $recentSessions,
             'active_academic_year'=> $activeAcademicYear ? $activeAcademicYear->name : null,
@@ -135,9 +147,12 @@ class TutorAttendanceController extends Controller
             ]);
         }
 
+        $hasSpecialization = ($tentor && !empty(trim($tentor->specialization ?? '')));
+
         $validated = $request->validate([
             'date'                  => 'required|date',
             'study_group_id'        => 'required|uuid|exists:study_groups,id',
+            'subject_name'          => $hasSpecialization ? 'nullable|string|max:100' : 'required|string|max:100',
             'topic_description'     => 'required|string|min:5|max:2000',
             'documentation_photo'   => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
             'attendances'           => 'required|array|min:1',
@@ -149,6 +164,7 @@ class TutorAttendanceController extends Controller
             'date.date'                      => 'Format tanggal pertemuan tidak valid.',
             'study_group_id.required'        => 'Kelompok bimbel wajib dipilih.',
             'study_group_id.exists'          => 'Kelompok bimbel tidak valid.',
+            'subject_name.required'          => 'Mata pelajaran wajib dipilih karena profil guru belum memiliki spesialisasi.',
             'topic_description.required'     => 'Deskripsi materi yang dipelajari wajib diisi.',
             'topic_description.min'          => 'Deskripsi materi minimal 5 karakter.',
             'documentation_photo.required'   => 'Foto dokumentasi kelas wajib diunggah.',
@@ -187,13 +203,17 @@ class TutorAttendanceController extends Controller
 
             $activeAcademicYear = AcademicYear::where('is_active', true)->first();
 
+            $finalSubjectName = $hasSpecialization
+                ? $tentor->specialization
+                : ($validated['subject_name'] ?? 'Mata Pelajaran Umum');
+
             $session = AttendanceSession::create([
                 'tenant_id'            => $user->tenant_id,
                 'tentor_id'            => $tentorId,
                 'study_group_id'       => $validated['study_group_id'],
                 'academic_year_id'     => $activeAcademicYear?->id,
                 'date'                 => $validated['date'],
-                'subject_name'         => $tentor && $tentor->specialization ? $tentor->specialization : 'Mata Pelajaran Umum',
+                'subject_name'         => $finalSubjectName,
                 'topic_description'    => $validated['topic_description'],
                 'documentation_photo'  => $photoPath,
                 'created_by_user_id'   => $user->id,

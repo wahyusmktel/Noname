@@ -20,11 +20,24 @@ class Student extends BaseModel
         'student_phone',
         'photo',
         'status',
+        'nis',
     ];
 
     protected $appends = [
         'photo_url',
+        'nis',
     ];
+
+    /**
+     * Alias NIS ke kolom username
+     */
+    protected function nis(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->username,
+            set: fn ($value) => ['username' => $value],
+        );
+    }
 
     /**
      * URL Foto profil tersimpan atau null
@@ -59,5 +72,10 @@ class Student extends BaseModel
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function attendances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Attendance::class);
     }
 }

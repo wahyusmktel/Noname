@@ -45,6 +45,25 @@ class User extends Authenticatable
         ];
     }
 
+    protected $appends = [
+        'avatar_url',
+    ];
+
+    /**
+     * URL Foto Avatar Profil
+     */
+    protected function avatarUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function () {
+                if ($this->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->avatar)) {
+                    return \Illuminate\Support\Facades\Storage::disk('public')->url($this->avatar);
+                }
+                return null;
+            }
+        );
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);

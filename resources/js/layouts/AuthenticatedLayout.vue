@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     LayoutDashboard,
@@ -13,14 +13,12 @@ import {
     BookOpen,
     ClipboardList,
     FileBarChart,
-    Settings,
     LogOut,
     Bell,
     ChevronDown,
     ChevronRight,
     Menu,
     X,
-    Search,
     Layers,
     Shield,
     CheckCircle2,
@@ -85,6 +83,7 @@ const handleOutsideClick = (e: MouseEvent) => {
 
 onMounted(() => {
     window.addEventListener('click', handleOutsideClick);
+    loadReadNotificationIds();
 
     // Auto trigger toast jika ada pesan flash dari session backend
     const flash = (page.props as any).flash;
@@ -114,122 +113,196 @@ interface MenuItem {
     }[];
 }
 
-const openMenus = ref<Record<string, boolean>>({
-    lembaga: true,
-    manajemen_data: true,
-    presensi: false,
-    laporan: false,
-    pengaturan: false,
-});
-
-const toggleSubmenu = (menuId: string) => {
-    openMenus.value[menuId] = !openMenus.value[menuId];
-};
-
-const handleMenuClick = (menu: MenuItem) => {
-    if (!isSidebarOpen.value) {
-        isSidebarOpen.value = true;
-        openMenus.value[menu.id] = true;
-    } else {
-        toggleSubmenu(menu.id);
-    }
-};
+const openMenus = ref<Record<string, boolean>>({});
 
 const isSubmenuActive = (menu: MenuItem) => {
     if (!menu.submenus) return false;
     return menu.submenus.some(sub => sub.href !== '#' && (page.url === sub.href || page.url.startsWith(sub.href)));
 };
 
-const navigationMenus: MenuItem[] = [
-    {
-        id: 'dashboard',
-        title: 'Dashboard',
-        icon: LayoutDashboard,
-        href: '/dashboard',
-    },
-    {
-        id: 'lembaga',
-        title: 'Lembaga Bimbel',
-        icon: Building2,
-        submenus: [
-            { title: 'Profil Lembaga', href: '/lembaga/profil' },
-            { title: 'Tahun Pelajaran', href: '/academic-years' },
-        ],
-    },
-    {
-        id: 'manajemen_data',
-        title: 'Manajemen Data',
-        icon: Database,
-        submenus: [
-            { title: 'Mata Pelajaran', href: '/subjects' },
-            { title: 'Kelompok Bimbel', href: '/study-groups' },
-            { title: 'Tentor (Guru Bimbel)', href: '/tentors' },
-            { title: 'Peserta Didik', href: '/students' },
-        ],
-    },
-    {
-        id: 'admin_users',
-        title: 'Pengguna Admin',
-        icon: ShieldCheck,
-        href: '/admin-users',
-    },
-    {
-        id: 'presensi',
-        title: 'Presensi & Absensi',
-        icon: QrCode,
-        badge: 'Aktif',
-        submenus: [
-            { title: 'Pemindai QR Code Kamera', href: '#' },
-            { title: 'Input Presensi Manual', href: '#' },
-            { title: 'Pengajuan Izin & Sakit', href: '#' },
-            { title: 'Riwayat Kehadiran Lengkap', href: '#' },
-        ],
-    },
-    {
-        id: 'laporan',
-        title: 'Laporan & Rekapitulasi',
-        icon: FileBarChart,
-        submenus: [
-            { title: 'Rekap Bulanan Kehadiran', href: '#' },
-            { title: 'Laporan Performa Tutor', href: '#' },
-            { title: 'Ekspor Data Excel / PDF', href: '#' },
-        ],
-    },
-    {
-        id: 'pengaturan',
-        title: 'Pengaturan Sistem',
-        icon: Settings,
-        submenus: [
-            { title: 'Konfigurasi Jam Presensi', href: '#' },
-            { title: 'Audit Trail & Keamanan', href: '#' },
-        ],
-    },
-];
+const toggleSubmenu = (menuId: string) => {
+    const willOpen = !openMenus.value[menuId];
+    // Accordion: tutup semua submenu lain agar hanya menu yang dibuka yang aktif
+    Object.keys(openMenus.value).forEach(key => {
+        openMenus.value[key] = false;
+    });
+    openMenus.value[menuId] = willOpen;
+};
 
-// Sample Notification items
-const notifications = ref([
-    {
-        id: 1,
-        title: 'Presensi Kelas Baru Selesai',
-        desc: 'Kelas Intensif UTBK TPS A selesai dengan tingkat kehadiran 96%.',
-        time: '5 menit lalu',
-        unread: true,
+const handleMenuClick = (menu: MenuItem) => {
+    if (!isSidebarOpen.value) {
+        isSidebarOpen.value = true;
+        Object.keys(openMenus.value).forEach(key => {
+            openMenus.value[key] = false;
+        });
+        openMenus.value[menu.id] = true;
+    } else {
+        toggleSubmenu(menu.id);
+    }
+};
+
+const navigationMenus = computed<MenuItem[]>(() => {
+    // Menu khusus peran Tutor / Guru (saat ini hanya 1 menu: Absensi Siswa)
+    if (user.value?.role === 'tutor') {
+        return [
+            {
+                id: 'tutor_attendance',
+                title: 'Absensi Siswa',
+                icon: CalendarCheck,
+                href: '/tutor/attendance',
+            },
+        ];
+    }
+
+    // Menu khusus peran Orang Tua / Siswa (Portal Monitoring Belajar Anak)
+    if (user.value?.role === 'siswa' || user.value?.role === 'orang_tua') {
+        return [
+            {
+                id: 'parent_dashboard',
+                title: 'Monitoring Ananda',
+                icon: GraduationCap,
+                href: '/student/dashboard',
+            },
+        ];
+    }
+
+    return [
+        {
+            id: 'dashboard',
+            title: 'Dashboard',
+            icon: LayoutDashboard,
+            href: '/dashboard',
+        },
+        {
+            id: 'lembaga',
+            title: 'Lembaga Bimbel',
+            icon: Building2,
+            submenus: [
+                { title: 'Profil Lembaga', href: '/lembaga/profil' },
+                { title: 'Tahun Pelajaran', href: '/academic-years' },
+            ],
+        },
+        {
+            id: 'manajemen_data',
+            title: 'Manajemen Data',
+            icon: Database,
+            submenus: [
+                { title: 'Mata Pelajaran', href: '/subjects' },
+                { title: 'Kelompok Bimbel', href: '/study-groups' },
+                { title: 'Tentor (Guru Bimbel)', href: '/tentors' },
+                { title: 'Peserta Didik', href: '/students' },
+            ],
+        },
+        {
+            id: 'admin_users',
+            title: 'Pengguna Admin',
+            icon: ShieldCheck,
+            href: '/admin-users',
+        },
+        {
+            id: 'presensi',
+            title: 'Presensi & Absensi',
+            icon: CalendarCheck,
+            submenus: [
+                { title: 'Input Presensi Manual', href: '/attendance/manual' },
+            ],
+        },
+        {
+            id: 'laporan',
+            title: 'Laporan & Rekapitulasi',
+            icon: FileBarChart,
+            submenus: [
+                { title: 'Kehadiran Peserta Didik', href: '/reports/student-attendance' },
+                { title: 'Kehadiran Guru', href: '/reports/tutor-attendance' },
+            ],
+        },
+    ];
+});
+
+// Sinkronkan status open submenu hanya untuk menu yang aktif sesuai rute saat ini
+const syncOpenMenusWithRoute = () => {
+    let matchedMenuId: string | null = null;
+    navigationMenus.value.forEach(menu => {
+        if (isSubmenuActive(menu)) {
+            matchedMenuId = menu.id;
+        }
+    });
+
+    const newOpenState: Record<string, boolean> = {};
+    navigationMenus.value.forEach(menu => {
+        if (menu.submenus) {
+            newOpenState[menu.id] = (menu.id === matchedMenuId);
+        }
+    });
+    openMenus.value = newOpenState;
+};
+
+// Pantau perubahan URL rute agar treeview otomatis menyesuaikan
+watch(
+    () => page.url,
+    () => {
+        syncOpenMenusWithRoute();
     },
-    {
-        id: 2,
-        title: 'Izin Siswa Baru',
-        desc: 'Adinda Kirana mengajukan izin sakit untuk sesi siang hari ini.',
-        time: '20 menit lalu',
-        unread: true,
-    },
-    {
-        id: 3,
-        title: 'Backup Data Otomatis',
-        desc: 'Sinkronisasi cloud data kehadiran berhasil dicadangkan.',
-        time: '1 jam lalu',
-        unread: false,
-    },
-]);
+    { immediate: true }
+);
+
+// ==========================================
+// NOTIFIKASI AKTIVITAS ABSENSI GURU
+// ==========================================
+const READ_NOTIFS_KEY = 'bimbel_read_notification_ids';
+const readNotificationIds = ref<string[]>([]);
+
+const loadReadNotificationIds = () => {
+    try {
+        const stored = localStorage.getItem(READ_NOTIFS_KEY);
+        if (stored) {
+            readNotificationIds.value = JSON.parse(stored);
+        }
+    } catch {
+        readNotificationIds.value = [];
+    }
+};
+
+const saveReadNotificationIds = (ids: string[]) => {
+    try {
+        localStorage.setItem(READ_NOTIFS_KEY, JSON.stringify(ids));
+        readNotificationIds.value = ids;
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+const isParentOrStudent = computed(() => {
+    return user.value?.role === 'siswa' || user.value?.role === 'orang_tua';
+});
+
+const notifications = computed(() => {
+    const raw = (page.props as any).recent_notifications || [];
+    return raw.map((item: any) => ({
+        ...item,
+        unread: !readNotificationIds.value.includes(item.id),
+    }));
+});
+
+const unreadCount = computed(() => {
+    return notifications.value.filter((n: any) => n.unread).length;
+});
+
+const markAllAsRead = () => {
+    const allIds = notifications.value.map((n: any) => n.id);
+    saveReadNotificationIds(Array.from(new Set([...readNotificationIds.value, ...allIds])));
+    toast('Semua notifikasi ditandai sudah dibaca', 'info');
+};
+
+const handleNotificationClick = (item: any) => {
+    if (!readNotificationIds.value.includes(item.id)) {
+        saveReadNotificationIds([...readNotificationIds.value, item.id]);
+    }
+    isNotificationDropdownOpen.value = false;
+    if (item.url) {
+        router.visit(item.url);
+    }
+};
 
 // Logout handler dengan konfirmasi SweetAlert2 (Mandatory Rule #3)
 const handleLogout = async () => {
@@ -277,54 +350,33 @@ const handleLogout = async () => {
 
                 <!-- Logo & Tenant Info on Topbar -->
                 <div class="flex items-center gap-2.5">
-                    <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center text-white font-black shadow-md shadow-orange-500/20">
-                        <GraduationCap class="h-5 w-5" />
-                    </div>
+                    <img
+                        :src="tenant?.logo_url || (page.props as any).app_logo || '/images/logo_bnn.png'"
+                        :alt="tenant?.name ?? 'Logo Bimbel'"
+                        class="h-9 w-9 object-contain rounded-xl bg-white p-0.5 border border-slate-200/80 shadow-xs shrink-0"
+                    />
                     <div class="hidden sm:block">
                         <div class="flex items-center gap-1.5">
-                            <span class="font-bold text-slate-900 tracking-tight text-base">{{ tenant?.name ?? 'Absensi Bimbel' }}</span>
-                            <span class="inline-flex items-center gap-0.5 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-700">
-                                <Sparkles class="h-2.5 w-2.5" />
-                                PRO
-                            </span>
+                            <span class="font-bold text-slate-900 tracking-tight text-base">{{ tenant?.name ?? 'Bimbel No Name' }}</span>
                         </div>
-                        <p class="text-xs text-slate-500 font-medium">Sistem Presensi Multi-Tenant Modern</p>
+                        <p class="text-xs text-slate-500 font-medium">Sistem Manajemen Bimbel</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Center: Search input (desktop) -->
-            <div class="hidden lg:flex items-center relative w-72">
-                <Search class="absolute left-3 h-4 w-4 text-slate-400" />
-                <input
-                    type="text"
-                    placeholder="Cari siswa, kelas, jadwal..."
-                    class="w-full h-9.5 pl-9 pr-4 text-xs bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-orange-300 rounded-xl transition-all focus:outline-none focus:ring-3 focus:ring-orange-500/10 placeholder:text-slate-400 font-medium"
-                />
-            </div>
-
             <!-- Right: Notifications & User Profile Dropdown -->
-            <div class="flex items-center gap-2.5">
-                <!-- Quick Action QR Scanner button -->
-                <button
-                    class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-98 text-white text-xs font-semibold shadow-sm shadow-orange-500/25 transition-all"
-                    title="Buka Kamera Scan QR"
-                >
-                    <QrCode class="h-3.5 w-3.5" />
-                    <span>Scan QR</span>
-                </button>
-
+            <div class="flex items-center gap-2.5 ml-auto">
                 <!-- Notification Bell Container -->
                 <div id="notification-dropdown-container" class="relative">
                     <button
                         @click="toggleNotificationDropdown"
                         class="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:text-orange-600 hover:bg-orange-50 transition-colors focus:outline-none"
-                        title="Notifikasi"
+                        title="Notifikasi Aktivitas Guru"
                     >
                         <Bell class="h-5 w-5" />
-                        <span class="absolute top-2 right-2 flex h-2 w-2">
+                        <span v-if="unreadCount > 0" class="absolute top-2 right-2 flex h-2.5 w-2.5">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500 ring-2 ring-white"></span>
                         </span>
                     </button>
 
@@ -341,27 +393,75 @@ const handleLogout = async () => {
                             v-if="isNotificationDropdownOpen"
                             class="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white shadow-xl border border-slate-100 py-3 z-50 animate-in fade-in"
                         >
-                            <div class="flex items-center justify-between px-4 pb-2 border-b border-slate-100">
-                                <span class="font-bold text-sm text-slate-800">Pemberitahuan Sistem</span>
-                                <span class="text-[11px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">2 Baru</span>
+                            <div class="flex items-center justify-between px-4 pb-2.5 border-b border-slate-100">
+                                <div>
+                                    <span class="font-bold text-sm text-slate-800">
+                                        {{ isParentOrStudent ? 'Presensi Kehadiran Ananda' : 'Aktivitas Presensi Guru' }}
+                                    </span>
+                                    <p class="text-[11px] text-slate-400">
+                                        {{ isParentOrStudent ? 'Pemberitahuan absensi kelas ananda' : 'Pemberitahuan absensi kelas terkini' }}
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        v-if="unreadCount > 0"
+                                        class="text-[11px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full"
+                                    >
+                                        {{ unreadCount }} Baru
+                                    </span>
+                                    <button
+                                        v-if="unreadCount > 0"
+                                        @click.stop="markAllAsRead"
+                                        class="text-[11px] text-slate-400 hover:text-orange-600 transition-colors font-medium hover:underline"
+                                    >
+                                        Tandai Dibaca
+                                    </button>
+                                </div>
                             </div>
-                            <div class="max-h-72 overflow-y-auto divide-y divide-slate-50">
+                            <div class="max-h-80 overflow-y-auto divide-y divide-slate-50">
+                                <div
+                                    v-if="notifications.length === 0"
+                                    class="py-8 text-center text-slate-400 text-xs px-4"
+                                >
+                                    <CalendarCheck class="w-8 h-8 text-slate-300 mx-auto mb-2 opacity-60" />
+                                    {{ isParentOrStudent ? 'Belum ada pemberitahuan presensi ananda.' : 'Belum ada aktivitas absensi baru dari guru.' }}
+                                </div>
                                 <div
                                     v-for="item in notifications"
                                     :key="item.id"
-                                    class="p-3.5 hover:bg-slate-50/80 transition-colors cursor-pointer flex gap-3 items-start"
+                                    @click="handleNotificationClick(item)"
+                                    class="p-3.5 hover:bg-slate-50/90 transition-colors cursor-pointer flex gap-3 items-start group"
                                     :class="{ 'bg-orange-50/40': item.unread }"
                                 >
-                                    <div class="h-2 w-2 rounded-full mt-1.5 shrink-0" :class="item.unread ? 'bg-orange-500' : 'bg-transparent'"></div>
-                                    <div class="flex-1">
-                                        <p class="text-xs font-semibold text-slate-800 leading-snug">{{ item.title }}</p>
-                                        <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{{ item.desc }}</p>
-                                        <span class="text-[10px] text-slate-400 font-medium block mt-1">{{ item.time }}</span>
+                                    <div
+                                        class="h-2 w-2 rounded-full mt-1.5 shrink-0 transition-colors"
+                                        :class="item.unread ? 'bg-orange-500' : 'bg-transparent group-hover:bg-slate-300'"
+                                    ></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p
+                                            class="text-xs font-semibold leading-snug truncate"
+                                            :class="item.unread ? 'text-slate-900 font-bold' : 'text-slate-700'"
+                                        >
+                                            {{ item.title }}
+                                        </p>
+                                        <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed line-clamp-2">
+                                            {{ item.desc }}
+                                        </p>
+                                        <span class="text-[10px] text-slate-400 font-medium block mt-1">
+                                            {{ item.time }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="pt-2 px-4 border-t border-slate-100 text-center">
-                                <a href="#" class="text-xs font-semibold text-orange-600 hover:text-orange-700">Lihat Semua Notifikasi</a>
+                            <div class="pt-2.5 px-4 border-t border-slate-100 text-center">
+                                <Link
+                                    :href="isParentOrStudent ? '/student/dashboard' : '/reports/tutor-attendance'"
+                                    @click="isNotificationDropdownOpen = false"
+                                    class="text-xs font-semibold text-orange-600 hover:text-orange-700 inline-flex items-center gap-1 hover:underline"
+                                >
+                                    <span>{{ isParentOrStudent ? 'Lihat Riwayat Kehadiran Ananda' : 'Lihat Semua Rekap Kehadiran Guru' }}</span>
+                                    <span>&rarr;</span>
+                                </Link>
                             </div>
                         </div>
                     </transition>
@@ -376,14 +476,17 @@ const handleLogout = async () => {
                         class="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-xl hover:bg-slate-100/80 transition-colors focus:outline-none border border-transparent hover:border-slate-200/60"
                     >
                         <!-- Profile Circle Avatar with soft orange ring -->
-                        <div class="relative h-9 w-9 rounded-full ring-2 ring-orange-500/30 bg-gradient-to-tr from-orange-500 via-amber-400 to-orange-300 flex items-center justify-center text-white font-bold text-xs shadow-sm">
-                            {{ user?.name ? user.name.charAt(0).toUpperCase() : 'A' }}
-                            <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                        <div class="relative shrink-0">
+                            <div class="h-9 w-9 rounded-full ring-2 ring-orange-500/30 bg-gradient-to-tr from-orange-500 via-amber-400 to-orange-300 flex items-center justify-center text-white font-bold text-xs shadow-sm overflow-hidden">
+                                <img v-if="user?.avatar_url" :src="user.avatar_url" :alt="user.name" class="h-full w-full object-cover" />
+                                <span v-else>{{ user?.name ? user.name.charAt(0).toUpperCase() : 'A' }}</span>
+                            </div>
+                            <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white shadow-xs"></span>
                         </div>
                         <div class="hidden md:block text-left">
                             <span class="block text-xs font-bold text-slate-800 leading-tight max-w-[120px] truncate">{{ user?.name ?? 'Administrator' }}</span>
                             <span class="block text-[10px] font-medium text-orange-600 capitalize">
-                                {{ user?.role === 'admin_bimbel' ? 'Admin Lembaga' : user?.role }}
+                                {{ user?.role === 'admin_bimbel' ? 'Admin Lembaga' : (user?.role === 'tutor' ? 'Guru Bimbel' : (user?.role === 'siswa' || user?.role === 'orang_tua' ? 'Wali Murid' : user?.role)) }}
                             </span>
                         </div>
                         <ChevronDown class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': isProfileDropdownOpen }" />
@@ -416,18 +519,30 @@ const handleLogout = async () => {
 
                             <!-- Menu links -->
                             <div class="py-1">
-                                <a href="#" class="flex items-center gap-2.5 px-4 py-2 font-medium text-slate-700 hover:text-orange-600 hover:bg-orange-50/50 transition-colors">
+                                <Link
+                                    href="/user/profile"
+                                    @click="isProfileDropdownOpen = false"
+                                    class="flex items-center gap-2.5 px-4 py-2 font-medium text-slate-700 hover:text-orange-600 hover:bg-orange-50/50 transition-colors"
+                                >
                                     <User class="h-4 w-4 text-slate-400" />
                                     <span>Profil Saya</span>
-                                </a>
-                                <a href="#" class="flex items-center gap-2.5 px-4 py-2 font-medium text-slate-700 hover:text-orange-600 hover:bg-orange-50/50 transition-colors">
+                                </Link>
+                                <Link
+                                    href="/user/settings"
+                                    @click="isProfileDropdownOpen = false"
+                                    class="flex items-center gap-2.5 px-4 py-2 font-medium text-slate-700 hover:text-orange-600 hover:bg-orange-50/50 transition-colors"
+                                >
                                     <SlidersHorizontal class="h-4 w-4 text-slate-400" />
                                     <span>Pengaturan Akun</span>
-                                </a>
-                                <a href="#" class="flex items-center gap-2.5 px-4 py-2 font-medium text-slate-700 hover:text-orange-600 hover:bg-orange-50/50 transition-colors">
+                                </Link>
+                                <Link
+                                    href="/help-center"
+                                    @click="isProfileDropdownOpen = false"
+                                    class="flex items-center gap-2.5 px-4 py-2 font-medium text-slate-700 hover:text-orange-600 hover:bg-orange-50/50 transition-colors"
+                                >
                                     <HelpCircle class="h-4 w-4 text-slate-400" />
                                     <span>Pusat Bantuan & Panduan</span>
-                                </a>
+                                </Link>
                             </div>
 
                             <!-- Divider -->
@@ -551,7 +666,7 @@ const handleLogout = async () => {
                             <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span>Sistem Siap Digunakan</span>
                         </div>
-                        <p class="text-[10px] text-slate-500 mt-1 leading-tight">Presensi otomatis real-time & multi-tenant aman.</p>
+                        <p class="text-[10px] text-slate-500 mt-1 leading-tight">Presensi otomatis real-time</p>
                     </div>
                 </div>
                 <div v-else class="p-3 border-t border-slate-100 flex justify-center">
@@ -591,10 +706,12 @@ const handleLogout = async () => {
                     <!-- Mobile Drawer Header -->
                     <div class="flex items-center justify-between px-4 py-4 border-b border-slate-100 bg-orange-50/40">
                         <div class="flex items-center gap-2.5">
-                            <div class="h-8 w-8 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold">
-                                <GraduationCap class="h-4 w-4" />
-                            </div>
-                            <span class="font-bold text-slate-900 text-sm truncate">{{ tenant?.name ?? 'Absensi Bimbel' }}</span>
+                            <img
+                                :src="tenant?.logo_url || (page.props as any).app_logo || '/images/logo_bnn.png'"
+                                :alt="tenant?.name ?? 'Logo Bimbel'"
+                                class="h-8 w-8 object-contain rounded-xl bg-white p-0.5 border border-slate-200/80 shadow-xs shrink-0"
+                            />
+                            <span class="font-bold text-slate-900 text-sm truncate">{{ tenant?.name ?? 'Bimbel No Name' }}</span>
                         </div>
                         <button @click="closeMobileMenu" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700">
                             <X class="h-5 w-5" />
@@ -668,13 +785,8 @@ const handleLogout = async () => {
                             <span>&bull;</span>
                             <span>&copy; 2026 Hak Cipta Dilindungi</span>
                         </div>
-                        <div class="flex items-center gap-4 text-slate-400">
-                            <span class="flex items-center gap-1.5 text-emerald-600 font-medium">
-                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                Server Normal (Redis & MySQL)
-                            </span>
-                            <span>&bull;</span>
-                            <span>v1.0.0-SPA</span>
+                        <div class="flex items-center gap-4 text-slate-400 font-medium">
+                            <span>v1.0.0</span>
                         </div>
                     </div>
                 </footer>

@@ -9,19 +9,20 @@ import {
     Mail,
     Globe,
     Clock,
-    Sparkles,
     ShieldCheck,
     Save,
     RotateCcw,
     Loader2,
     CheckCircle2,
-    Palette,
     FileText,
     Users,
     GraduationCap,
     School,
     Calendar,
     BadgeCheck,
+    Upload,
+    Image,
+    Trash2,
 } from 'lucide-vue-next';
 import { useNotification } from '@/composables/useNotification';
 
@@ -32,6 +33,8 @@ interface Props {
         slug: string;
         tagline?: string;
         description?: string;
+        logo?: string;
+        logo_url?: string;
         phone: string;
         whatsapp_sender?: string;
         email?: string;
@@ -41,7 +44,6 @@ interface Props {
         province?: string;
         postal_code?: string;
         operating_hours?: string;
-        brand_color?: string;
         package_type: string;
         status: string;
         created_at: string;
@@ -49,7 +51,7 @@ interface Props {
     stats: {
         total_students: number;
         total_tutors: number;
-        total_classes: number;
+        total_groups: number;
         attendance_rate: number;
         joined_since: string;
     };
@@ -59,13 +61,19 @@ const props = defineProps<Props>();
 const { toast, confirmAction } = useNotification();
 
 // Active tab for form organization
-const activeTab = ref<'identity' | 'contact' | 'whatsapp'>('identity');
+const activeTab = ref<'identity' | 'contact'>('identity');
+
+// Logo file ref & preview
+const logoInputRef = ref<HTMLInputElement | null>(null);
+const previewLogo = ref<string | null>(null);
 
 // Form setup with Inertia useForm
 const form = useForm({
     name: props.tenant.name || '',
     tagline: props.tenant.tagline || 'Bimbingan Belajar Modern Berbasis Prestasi & Terpantau Real-Time',
     description: props.tenant.description || 'Lembaga bimbingan belajar berkualitas yang memadukan pengajaran interaktif dengan sistem presensi real-time terintegrasi notifikasi WhatsApp ke orang tua.',
+    logo: null as File | null,
+    remove_logo: false,
     phone: props.tenant.phone || '',
     whatsapp_sender: props.tenant.whatsapp_sender || props.tenant.phone || '',
     email: props.tenant.email || '',
@@ -75,24 +83,44 @@ const form = useForm({
     province: props.tenant.province || 'DKI Jakarta',
     postal_code: props.tenant.postal_code || '12340',
     operating_hours: props.tenant.operating_hours || 'Senin - Sabtu (08:00 - 20:00 WIB)',
-    brand_color: props.tenant.brand_color || '#F97316',
 });
 
-// Color palettes for brand theme picker
-const presetColors = [
-    { name: 'Soft Modern Orange (Brand)', value: '#F97316' },
-    { name: 'Amber Warm', value: '#F59E0B' },
-    { name: 'Coral Rose', value: '#FB7185' },
-    { name: 'Indigo Modern', value: '#6366F1' },
-    { name: 'Emerald Fresh', value: '#10B981' },
-];
+const onFileSelect = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+        const file = target.files[0];
+        if (file.size > 5 * 1024 * 1024) {
+            toast('Ukuran berkas logo maksimal 5MB.', 'error');
+            return;
+        }
+        form.logo = file;
+        form.remove_logo = false;
+        previewLogo.value = URL.createObjectURL(file);
+        toast('Logo berhasil dipilih. Klik "Simpan Perubahan Profil" untuk menerapkan.', 'info');
+    }
+};
 
-// Save changes handler
-const submit = async () => {
-    form.put('/lembaga/profil', {
+const triggerFileInput = () => {
+    logoInputRef.value?.click();
+};
+
+const removeSelectedLogo = () => {
+    form.logo = null;
+    form.remove_logo = true;
+    previewLogo.value = '/images/logo_bnn.png';
+    if (logoInputRef.value) {
+        logoInputRef.value.value = '';
+    }
+    toast('Logo akan dikembalikan ke logo bawaan setelah disimpan.', 'info');
+};
+
+// Save changes handler (uses POST with forceFormData for multipart file upload)
+const submit = () => {
+    form.post('/lembaga/profil', {
+        forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
-            toast('Profil lembaga bimbel berhasil disimpan!', 'success');
+            toast('Profil dan logo lembaga bimbel berhasil diperbarui!', 'success');
         },
         onError: (err) => {
             const firstErr = Object.values(err)[0];
@@ -106,6 +134,10 @@ const submit = async () => {
 // Reset form values
 const resetForm = () => {
     form.reset();
+    previewLogo.value = null;
+    if (logoInputRef.value) {
+        logoInputRef.value.value = '';
+    }
     toast('Perubahan form telah dibatalkan.', 'info');
 };
 </script>
@@ -133,10 +165,6 @@ const resetForm = () => {
                         <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         Status: Lembaga Aktif
                     </span>
-                    <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-50 text-orange-700 border border-orange-200 text-xs font-bold uppercase">
-                        <Sparkles class="h-3 w-3" />
-                        Paket {{ tenant.package_type }}
-                    </span>
                 </div>
             </div>
 
@@ -147,18 +175,18 @@ const resetForm = () => {
                 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div class="flex items-start sm:items-center gap-4">
                         <!-- Logo Avatar with Soft Orange Accent -->
-                        <div class="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-white text-orange-600 flex items-center justify-center font-black shadow-xl shrink-0">
-                            <GraduationCap class="h-9 w-9 sm:h-11 sm:w-11" />
-                        </div>
+                        <img
+                            :src="previewLogo || tenant.logo_url || '/images/logo_bnn.png'"
+                            :alt="form.name"
+                            class="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-white p-1.5 object-contain shadow-xl shrink-0 border border-white/40"
+                        />
                         <div class="space-y-1">
                             <div class="flex items-center gap-2">
                                 <h2 class="text-xl sm:text-2xl font-black tracking-tight">{{ form.name }}</h2>
                                 <BadgeCheck class="h-5 w-5 text-amber-200 shrink-0" />
                             </div>
                             <p class="text-xs sm:text-sm text-orange-100 font-medium">{{ form.tagline }}</p>
-                            <div class="flex flex-wrap items-center gap-3 pt-1 text-xs text-orange-100/90 font-mono">
-                                <span>ID: {{ tenant.slug }}.bimbel.id</span>
-                                <span>&bull;</span>
+                            <div class="flex flex-wrap items-center gap-3 pt-1 text-xs text-orange-100/90 font-medium">
                                 <span>Domisili: {{ form.city }}</span>
                             </div>
                         </div>
@@ -175,8 +203,8 @@ const resetForm = () => {
                             <span class="text-[10px] text-orange-100 font-semibold uppercase">Tutor</span>
                         </div>
                         <div class="px-2">
-                            <span class="block text-lg sm:text-xl font-black text-white">{{ stats.total_classes }}</span>
-                            <span class="text-[10px] text-orange-100 font-semibold uppercase">Kelas</span>
+                            <span class="block text-lg sm:text-xl font-black text-white">{{ stats.total_groups }}</span>
+                            <span class="text-[10px] text-orange-100 font-semibold uppercase">Kelompok</span>
                         </div>
                     </div>
                 </div>
@@ -191,7 +219,7 @@ const resetForm = () => {
                     :class="activeTab === 'identity' ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/25' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
                 >
                     <Building2 class="h-4 w-4" />
-                    <span>Identitas & Visi Lembaga</span>
+                    <span>Identitas & Logo Lembaga</span>
                 </button>
 
                 <button
@@ -212,8 +240,54 @@ const resetForm = () => {
                 <!-- ======================================================== -->
                 <div v-show="activeTab === 'identity'" class="rounded-3xl bg-white border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-6">
                     <div class="border-b border-slate-100 pb-4">
-                        <h3 class="text-base font-bold text-slate-900">Identitas Utama Lembaga</h3>
-                        <p class="text-xs text-slate-500">Nama dan slogan yang tampil pada aplikasi mobile siswa, landing page, dan cetakan laporan.</p>
+                        <h3 class="text-base font-bold text-slate-900">Identitas & Logo Lembaga</h3>
+                        <p class="text-xs text-slate-500">Kelola nama resmi, logo lembaga, moto, dan visi bimbingan belajar.</p>
+                    </div>
+
+                    <!-- LOGO LEMBAGA UPLOADER -->
+                    <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                        <div class="relative shrink-0">
+                            <img
+                                :src="previewLogo || tenant.logo_url || '/images/logo_bnn.png'"
+                                :alt="form.name"
+                                class="h-20 w-20 sm:h-24 sm:w-24 object-contain rounded-2xl bg-white p-2 border border-slate-200 shadow-sm"
+                            />
+                        </div>
+                        <div class="space-y-2 flex-1">
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">Logo Resmi Lembaga Bimbel</h4>
+                                <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                    Logo ini otomatis terpasang pada header aplikasi, halaman login, dashboard, serta halaman landing page. Format didukung: PNG, JPG, JPEG, SVG, WebP (Maksimal 5MB).
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 pt-1">
+                                <input
+                                    ref="logoInputRef"
+                                    type="file"
+                                    accept="image/*"
+                                    class="hidden"
+                                    @change="onFileSelect"
+                                />
+                                <button
+                                    type="button"
+                                    @click="triggerFileInput"
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
+                                >
+                                    <Upload class="h-3.5 w-3.5" />
+                                    <span>Pilih File Logo Baru</span>
+                                </button>
+                                <button
+                                    v-if="tenant.logo || previewLogo"
+                                    type="button"
+                                    @click="removeSelectedLogo"
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-slate-600 font-semibold text-xs transition-all cursor-pointer"
+                                >
+                                    <Trash2 class="h-3.5 w-3.5" />
+                                    <span>Kembalikan ke Default</span>
+                                </button>
+                            </div>
+                            <p v-if="form.errors.logo" class="text-[11px] text-rose-500 font-semibold mt-1">{{ form.errors.logo }}</p>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -252,34 +326,6 @@ const resetForm = () => {
                                 class="w-full p-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-orange-500 focus:ring-3 focus:ring-orange-500/15 text-xs text-slate-800 font-medium transition-all focus:outline-none leading-relaxed"
                                 placeholder="Tuliskan deskripsi singkat mengenai metode dan fokus bimbingan belajar..."
                             ></textarea>
-                        </div>
-
-                        <!-- Subdomain / Slug (Read-only system identifier) -->
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-bold text-slate-700">ID Subdomain Sistem</label>
-                            <div class="flex items-center rounded-xl border border-slate-200 bg-slate-100 px-4 h-11 text-xs text-slate-600 font-mono select-all">
-                                <span>{{ tenant.slug }}</span>
-                                <span class="text-slate-400">.bimbel.id</span>
-                            </div>
-                            <span class="text-[10px] text-slate-400">ID unik lembaga untuk akses multi-tenant terisolasi.</span>
-                        </div>
-
-                        <!-- Brand Accent Color -->
-                        <div class="space-y-1.5">
-                            <label class="block text-xs font-bold text-slate-700">Warna Identitas Lembaga</label>
-                            <div class="flex items-center gap-2 h-11">
-                                <button
-                                    v-for="color in presetColors"
-                                    :key="color.value"
-                                    type="button"
-                                    @click="form.brand_color = color.value"
-                                    class="h-7 w-7 rounded-full border-2 transition-transform"
-                                    :class="form.brand_color === color.value ? 'scale-110 border-slate-800 shadow-md ring-2 ring-orange-500/30' : 'border-transparent hover:scale-105'"
-                                    :style="{ backgroundColor: color.value }"
-                                    :title="color.name"
-                                ></button>
-                                <span class="text-xs font-mono font-bold text-slate-600 ml-2">{{ form.brand_color }}</span>
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -35,6 +35,25 @@ class Tenant extends Model
         'status',
     ];
 
+    protected $appends = [
+        'logo_url',
+    ];
+
+    /**
+     * URL Logo Lembaga Bimbel
+     */
+    protected function logoUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function () {
+                if ($this->logo && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->logo)) {
+                    return \Illuminate\Support\Facades\Storage::disk('public')->url($this->logo);
+                }
+                return '/images/logo_bnn.png';
+            }
+        );
+    }
+
     protected function casts(): array
     {
         return [

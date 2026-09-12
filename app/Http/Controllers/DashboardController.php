@@ -2,7 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Tenant;
+use App\Models\AcademicYear;
+use App\Models\Attendance;
+use App\Models\AttendanceSession;
+use App\Models\Student;
+use App\Models\StudyGroup;
+use App\Models\Tentor;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -13,123 +19,119 @@ class DashboardController extends Controller
     /**
      * Tampilkan Halaman Utama Dashboard Admin Bimbel
      */
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
         $user = Auth::user();
+
+        // Jika user adalah role tutor / guru, arahkan ke dashboard absensi guru
+        if ($user->isTutor()) {
+            return redirect()->route('tutor.attendance');
+        }
+
+        // Jika user adalah role siswa / orang tua, arahkan ke portal monitoring orang tua
+        if ($user->isStudent() || $user->isParent()) {
+            return redirect()->route('student.dashboard');
+        }
+
         $tenant = $user->tenant;
 
-        // Data statistik sementara untuk tampilan UI modern
+        // 1. Metrik Real-Time Database
+        $totalStudents = Student::query()->where('status', 'active')->count();
+        $totalTutors   = Tentor::query()->count();
+        $totalClasses  = StudyGroup::query()->where('is_active', true)->count();
+        $totalSessionsToday = AttendanceSession::query()->whereDate('date', Carbon::today())->count();
+
+        // Total sesi presensi bulan ini
+        $monthlySessionsCount = AttendanceSession::query()
+            ->whereMonth('date', Carbon::now()->month)
+            ->whereYear('date', Carbon::now()->year)
+            ->count();
+
+        // Hitung rata-rata tingkat kehadiran siswa bulan ini
+        $totalAttendancesMonth = Attendance::query()
+            ->whereHas('attendanceSession', function ($q) {
+                $q->whereMonth('date', Carbon::now()->month)
+                  ->whereYear('date', Carbon::now()->year);
+            })
+            ->count();
+
+        $presentAttendancesMonth = Attendance::query()
+            ->where('status', 'present')
+            ->whereHas('attendanceSession', function ($q) {
+                $q->whereMonth('date', Carbon::now()->month)
+                  ->whereYear('date', Carbon::now()->year);
+            })
+            ->count();
+
+        $monthlyAttendanceRate = $totalAttendancesMonth > 0
+            ? round(($presentAttendancesMonth / $totalAttendancesMonth) * 100, 1)
+            : 100.0;
+
         $stats = [
-            'total_students'      => 142,
-            'students_present'    => 128,
-            'attendance_rate'     => 90.1,
-            'active_sessions'     => 6,
-            'total_tutors'        => 12,
-            'tutors_active_today' => 8,
-            'monthly_target'      => 95.0,
+            'total_students'       => $totalStudents,
+            'total_tutors'         => $totalTutors,
+            'total_classes'        => $totalClasses,
+            'today_sessions'       => $totalSessionsToday,
+            'monthly_sessions'     => $monthlySessionsCount,
+            'attendance_rate'      => $monthlyAttendanceRate,
+            'academic_year_name'   => AcademicYear::where('is_active', true)->value('name') ?? '2025/2026',
         ];
 
-        // Sesi jadwal kelas hari ini
-        $todaySessions = [
-            [
-                'id'            => 'sess-1',
-                'class_name'    => 'Kelas Intensif UTBK TPS A',
-                'tutor_name'    => 'Dr. Aris Sudrajat, M.Si.',
-                'subject'       => 'Penalaran Matematika & TPS',
-                'room'          => 'Ruang Einstein 1',
-                'time_start'    => '08:00',
-                'time_end'      => '10:00',
-                'total_students'=> 24,
-                'present_count' => 23,
-                'status'        => 'completed', // completed, ongoing, upcoming
-            ],
-            [
-                'id'            => 'sess-2',
-                'class_name'    => 'Kelas 12 SMA Reguler Saintek',
-                'tutor_name'    => 'Siti Nurhaliza, S.Pd.',
-                'subject'       => 'Fisika Kuantum & Dinamika',
-                'room'          => 'Ruang Newton 2',
-                'time_start'    => '10:30',
-                'time_end'      => '12:00',
-                'total_students'=> 20,
-                'present_count' => 18,
-                'status'        => 'ongoing',
-            ],
-            [
-                'id'            => 'sess-3',
-                'class_name'    => 'Kelas 9 SMP Persiapan Ujian',
-                'tutor_name'    => 'Reza Rahardian, S.Si.',
-                'subject'       => 'Matematika Aljabar',
-                'room'          => 'Ruang Galileo',
-                'time_start'    => '13:30',
-                'time_end'      => '15:00',
-                'total_students'=> 18,
-                'present_count' => 0,
-                'status'        => 'upcoming',
-            ],
-            [
-                'id'            => 'sess-4',
-                'class_name'    => 'English Academic Mastery (TOEFL)',
-                'tutor_name'    => 'Amanda Putri, M.Ed.',
-                'subject'       => 'Bahasa Inggris',
-                'room'          => 'Ruang Oxford',
-                'time_start'    => '15:30',
-                'time_end'      => '17:00',
-                'total_students'=> 15,
-                'present_count' => 0,
-                'status'        => 'upcoming',
-            ],
-        ];
+        // 2. Sesi Presensi Belajar Terbaru (Lengkap dengan dokumentasi foto)
+        $recentSessions = AttendanceSession::query()
+            ->with(['tentor:id,name', 'studyGroup:id,name,education_level'])
+            ->withCount([
+                'attendances as total_students',
+                'attendances as present_count' => fn ($q) => $q->where('status', 'present'),
+                'attendances as late_count'    => fn ($q) => $q->where('status', 'late'),
+            ])
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->take(6)
+            ->get()
+            ->map(fn ($s) => [
+                'id'               => $s->id,
+                'date'             => $s->date->format('Y-m-d'),
+                'formatted_date'   => $s->date->translatedFormat('d F Y'),
+                'tutor_name'       => $s->tentor ? $s->tentor->name : '-',
+                'class_name'       => $s->studyGroup ? $s->studyGroup->name : '-',
+                'education_level'  => $s->studyGroup ? $s->studyGroup->education_level : '-',
+                'subject'          => $s->subject_name,
+                'topic'            => $s->topic_description,
+                'photo_url'        => $s->photo_url,
+                'total_students'   => $s->total_students,
+                'present_count'    => $s->present_count,
+                'late_count'       => $s->late_count,
+                'created_at_human' => $s->created_at->diffForHumans(),
+            ]);
 
-        // Aktivitas presensi terbaru (real-time stream)
-        $recentLogs = [
-            [
-                'id'           => 'log-1',
-                'student_name' => 'Dimas Arya Pratama',
-                'nis'          => '2026-0089',
-                'class'        => 'Kelas Intensif UTBK TPS A',
-                'time'         => '07:54 WIB',
-                'method'       => 'QR Code Scanner',
-                'status'       => 'Hadir Tepat Waktu',
-                'status_type'  => 'success',
-            ],
-            [
-                'id'           => 'log-2',
-                'student_name' => 'Nabila Salsabila',
-                'nis'          => '2026-0045',
-                'class'        => 'Kelas Intensif UTBK TPS A',
-                'time'         => '07:58 WIB',
-                'method'       => 'Self Check-in',
-                'status'       => 'Hadir Tepat Waktu',
-                'status_type'  => 'success',
-            ],
-            [
-                'id'           => 'log-3',
-                'student_name' => 'Rifqi Ramadhan',
-                'nis'          => '2026-0112',
-                'class'        => 'Kelas 12 SMA Reguler',
-                'time'         => '10:35 WIB',
-                'method'       => 'Manual Input Tutor',
-                'status'       => 'Terlambat 5 Menit',
-                'status_type'  => 'warning',
-            ],
-            [
-                'id'           => 'log-4',
-                'student_name' => 'Adinda Kirana',
-                'nis'          => '2026-0063',
-                'class'        => 'Kelas 12 SMA Reguler',
-                'time'         => '10:40 WIB',
-                'method'       => 'Surat Izin Dokter',
-                'status'       => 'Izin Sakit',
-                'status_type'  => 'info',
-            ],
-        ];
+        // 3. Log Presensi Siswa Terbaru
+        $recentStudentLogs = Attendance::query()
+            ->with([
+                'student:id,name,username,photo',
+                'attendanceSession:id,date,subject_name,study_group_id',
+                'attendanceSession.studyGroup:id,name,education_level',
+            ])
+            ->orderBy('created_at', 'desc')
+            ->take(8)
+            ->get()
+            ->map(fn ($a) => [
+                'id'           => $a->id,
+                'student_name' => $a->student ? $a->student->name : '-',
+                'nis'          => $a->student ? ($a->student->username ?: '-') : '-',
+                'class_name'   => $a->attendanceSession && $a->attendanceSession->studyGroup ? $a->attendanceSession->studyGroup->name : '-',
+                'subject_name' => $a->attendanceSession ? $a->attendanceSession->subject_name : '-',
+                'date'         => $a->attendanceSession ? $a->attendanceSession->date->translatedFormat('d M Y') : '-',
+                'status'       => $a->status,
+                'notes'        => $a->notes,
+                'time_human'   => $a->created_at->diffForHumans(),
+            ]);
 
         return Inertia::render('Dashboard/Index', [
-            'stats'         => $stats,
-            'todaySessions' => $todaySessions,
-            'recentLogs'    => $recentLogs,
-            'tenant'        => $tenant,
+            'stats'             => $stats,
+            'recentSessions'    => $recentSessions,
+            'recentStudentLogs' => $recentStudentLogs,
+            'tenant'            => $tenant,
         ]);
     }
 }

@@ -115,8 +115,61 @@ class AuthAndDashboardTest extends TestCase
             ]
         );
 
+        $academicYear = \App\Models\AcademicYear::create([
+            'tenant_id'  => $tenant->id,
+            'name'       => '2026/2027',
+            'start_date' => '2026-07-01',
+            'end_date'   => '2027-06-30',
+            'is_active'  => true,
+        ]);
+
+        $group = \App\Models\StudyGroup::create([
+            'tenant_id'        => $tenant->id,
+            'academic_year_id' => $academicYear->id,
+            'name'             => 'Kelas 10 Reguler',
+            'is_active'        => true,
+        ]);
+
+        $student = \App\Models\Student::create([
+            'tenant_id'        => $tenant->id,
+            'academic_year_id' => $academicYear->id,
+            'study_group_id'   => $group->id,
+            'name'             => 'Dina Anjani',
+            'username'         => '261050',
+            'status'           => 'active',
+        ]);
+
+        $tentor = \App\Models\Tentor::create([
+            'tenant_id' => $tenant->id,
+            'name'      => 'Budi Pratama, S.Pd.',
+            'status'    => 'active',
+        ]);
+
+        $session = \App\Models\AttendanceSession::create([
+            'tenant_id'         => $tenant->id,
+            'academic_year_id'  => $academicYear->id,
+            'study_group_id'    => $group->id,
+            'tentor_id'         => $tentor->id,
+            'date'              => now()->toDateString(),
+            'subject_name'      => 'Matematika Dasar',
+            'topic_description' => 'Logika Matematika',
+        ]);
+
+        \App\Models\Attendance::create([
+            'tenant_id'             => $tenant->id,
+            'attendance_session_id' => $session->id,
+            'student_id'            => $student->id,
+            'status'                => 'present',
+        ]);
+
         $response = $this->actingAs($user)->get('/dashboard');
         $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Dashboard/Index')
+            ->has('stats')
+            ->has('recentSessions')
+            ->has('recentStudentLogs')
+        );
     }
 
     public function test_user_can_login_using_username(): void

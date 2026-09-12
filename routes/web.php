@@ -29,7 +29,7 @@ Route::middleware('auth')->group(function () {
     // Modul Lembaga Bimbel
     Route::prefix('lembaga')->name('institution.')->group(function () {
         Route::get('/profil', [InstitutionProfileController::class, 'show'])->name('profile');
-        Route::put('/profil', [InstitutionProfileController::class, 'update'])->name('profile.update');
+        Route::match(['put', 'post'], '/profil', [InstitutionProfileController::class, 'update'])->name('profile.update');
     });
 
     // Modul Tentor (Guru Bimbel)
@@ -63,4 +63,36 @@ Route::middleware('auth')->group(function () {
     // Modul Pengguna Admin & Staff
     Route::post('/admin-users/{admin_user}/toggle-status', [\App\Http\Controllers\AdminUserController::class, 'toggleStatus'])->name('admin-users.toggle-status');
     Route::resource('admin-users', \App\Http\Controllers\AdminUserController::class)->except(['create', 'show', 'edit']);
+
+    // Modul Presensi Manual (Solusi Darurat / Susulan untuk Guru Lupa Absen)
+    Route::get('/attendance/manual', [\App\Http\Controllers\ManualAttendanceController::class, 'index'])->name('attendance.manual');
+    Route::post('/attendance/manual', [\App\Http\Controllers\ManualAttendanceController::class, 'store'])->name('attendance.manual.store');
+    Route::delete('/attendance/manual/{attendanceSession}', [\App\Http\Controllers\ManualAttendanceController::class, 'destroy'])->name('attendance.manual.destroy');
+
+    // Modul Khusus Guru (Tutor) - Absensi Pertemuan
+    Route::get('/tutor/attendance', [\App\Http\Controllers\TutorAttendanceController::class, 'create'])->name('tutor.attendance');
+    Route::post('/tutor/attendance', [\App\Http\Controllers\TutorAttendanceController::class, 'store'])->name('tutor.attendance.store');
+
+    // Modul Laporan & Rekapitulasi Kehadiran Peserta Didik
+    Route::get('/reports/student-attendance', [\App\Http\Controllers\StudentAttendanceReportController::class, 'index'])->name('reports.student-attendance');
+    Route::get('/reports/student-attendance/export', [\App\Http\Controllers\StudentAttendanceReportController::class, 'export'])->name('reports.student-attendance.export');
+
+    // Modul Laporan & Rekapitulasi Kehadiran Guru (Tutor)
+    Route::get('/reports/tutor-attendance', [\App\Http\Controllers\TutorAttendanceReportController::class, 'index'])->name('reports.tutor-attendance');
+    Route::get('/reports/tutor-attendance/export', [\App\Http\Controllers\TutorAttendanceReportController::class, 'export'])->name('reports.tutor-attendance.export');
+
+    // Modul Portal Monitoring Kehadiran Anak (Orang Tua / Siswa)
+    Route::get('/student/dashboard', [\App\Http\Controllers\StudentPortalController::class, 'index'])->name('student.dashboard');
+
+    // Modul Profil Pengguna (Khusus Ganti Foto Profil)
+    Route::get('/user/profile', [\App\Http\Controllers\UserProfileController::class, 'show'])->name('user.profile');
+    Route::post('/user/profile/photo', [\App\Http\Controllers\UserProfileController::class, 'updatePhoto'])->name('user.profile.photo');
+    Route::delete('/user/profile/photo', [\App\Http\Controllers\UserProfileController::class, 'deletePhoto'])->name('user.profile.photo.delete');
+
+    // Modul Pengaturan Akun & Keamanan (Ganti Password)
+    Route::get('/user/settings', [\App\Http\Controllers\AccountSettingController::class, 'index'])->name('user.settings');
+    Route::put('/user/settings/password', [\App\Http\Controllers\AccountSettingController::class, 'updatePassword'])->name('user.settings.password');
+
+    // Modul Pusat Bantuan & Panduan untuk Setiap Role
+    Route::get('/help-center', [\App\Http\Controllers\HelpCenterController::class, 'index'])->name('help.index');
 });

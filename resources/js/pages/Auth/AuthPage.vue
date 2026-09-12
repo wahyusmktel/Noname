@@ -273,196 +273,268 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-950 font-sans text-slate-100 flex flex-col justify-between relative overflow-hidden selection:bg-orange-500 selection:text-white">
-        <Head :title="activeTab === 'login' ? 'Masuk ke Akun Bimbel' : 'Pendaftaran Lembaga Bimbel Baru'" />
+    <div class="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col justify-between selection:bg-orange-500 selection:text-white">
+        <Head :title="activeTab === 'login' ? 'Masuk ke Akun Bimbel' : 'Pendaftaran Lembaga Bimbel'" />
 
-        <!-- AMBIENT GLOW EFFECTS (Soft Modern Orange & Amber) -->
-        <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-tr from-orange-600/25 via-amber-500/20 to-transparent blur-[120px] -z-10"></div>
-        <div class="pointer-events-none absolute -bottom-40 -left-20 h-[450px] w-[500px] rounded-full bg-orange-700/15 blur-[100px] -z-10"></div>
-        <div class="pointer-events-none absolute top-1/3 -right-20 h-[400px] w-[450px] rounded-full bg-amber-600/15 blur-[110px] -z-10"></div>
+        <!-- ========================================================================= -->
+        <!-- MODE 1: FULL PAGE LIGHT SOFT REDESIGN (DEFAULT LOGIN VIEW)                -->
+        <!-- ========================================================================= -->
+        <div v-if="activeTab === 'login'" class="flex-1 flex flex-col lg:flex-row min-h-screen">
+            <!-- LEFT COLUMN: VISUAL BRAND SHOWCASE & AI HERO ILLUSTRATION (DESKTOP ONLY) -->
+            <div class="hidden lg:flex lg:w-7/12 xl:w-3/5 bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-slate-100/90 p-8 lg:p-14 flex-col justify-between relative border-r border-slate-200/70 overflow-hidden">
+                <!-- Soft ambient glows -->
+                <div class="pointer-events-none absolute -top-24 -left-24 w-96 h-96 rounded-full bg-orange-200/35 blur-3xl -z-10"></div>
+                <div class="pointer-events-none absolute -bottom-24 right-10 w-96 h-96 rounded-full bg-amber-200/30 blur-3xl -z-10"></div>
 
-        <!-- HEADER NAVIGATION BAR -->
-        <header class="w-full max-w-7xl mx-auto px-4 sm:px-8 py-5 flex items-center justify-between z-10">
-            <!-- Brand Logo -->
-            <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center text-white font-black shadow-lg shadow-orange-500/30">
-                    <GraduationCap class="h-6 w-6" />
-                </div>
-                <div>
-                    <span class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                        AbsensiBimbel<span class="text-orange-400 font-normal">.id</span>
-                    </span>
-                    <p class="text-[10px] text-slate-400 font-medium">Sistem Presensi Multi-Tenant Masa Kini</p>
-                </div>
-            </div>
-
-            <!-- Tab Mode Pill Switcher -->
-            <div class="flex items-center bg-slate-900/90 p-1 rounded-2xl border border-slate-800 shadow-inner">
-                <button
-                    @click="activeTab = 'login'"
-                    type="button"
-                    class="px-4 py-1.5 rounded-xl text-xs font-bold transition-all"
-                    :class="activeTab === 'login' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25' : 'text-slate-400 hover:text-white'"
-                >
-                    Masuk Akun
-                </button>
-                <button
-                    @click="activeTab = 'register'"
-                    type="button"
-                    class="px-4 py-1.5 rounded-xl text-xs font-bold transition-all"
-                    :class="activeTab === 'register' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25' : 'text-slate-400 hover:text-white'"
-                >
-                    Daftar Lembaga Baru
-                </button>
-            </div>
-        </header>
-
-        <!-- MAIN CONTAINER -->
-        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-center z-10">
-            <!-- MODE 1: LOGIN CARD -->
-            <div
-                v-if="activeTab === 'login'"
-                class="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-2xl relative transition-all duration-300"
-            >
-                <div class="text-center space-y-1 mb-6">
-                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold mb-2">
-                        <KeyRound class="h-3.5 w-3.5" />
-                        <span>Portal Akses Lembaga</span>
-                    </div>
-                    <h2 class="text-2xl font-black tracking-tight text-white">Selamat Datang Kembali</h2>
-                    <p class="text-xs text-slate-400">Masukkan akun administrator lembaga bimbel Anda</p>
-                </div>
-
-                <!-- Quick Demo Pill -->
-                <div class="mb-5 p-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-between gap-2 text-xs">
-                    <div class="space-y-0.5">
-                        <span class="font-bold text-orange-300 block text-[11px]">Akun Demo Pengujian:</span>
-                        <span class="text-slate-300 font-mono text-[11px]">admin@bintangprestasi.com</span>
-                    </div>
-                    <button
-                        @click="fillDemoAccount"
-                        type="button"
-                        class="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold text-[11px] shadow-sm transition-all"
-                    >
-                        Auto-Fill
-                    </button>
-                </div>
-
-                <form @submit.prevent="submitLogin" class="space-y-4">
-                    <!-- Email or Username Input -->
-                    <div class="space-y-1.5">
-                        <label class="block text-xs font-semibold text-slate-300">Email atau Username</label>
-                        <div class="relative">
-                            <User class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
-                            <input
-                                v-model="loginForm.email"
-                                type="text"
-                                required
-                                placeholder="email@bimbel.com atau username (261001)"
-                                class="w-full h-10.5 pl-10 pr-4 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium transition-all focus:outline-none"
-                            />
-                        </div>
-                        <p v-if="loginForm.errors.email" class="text-[11px] text-rose-400 font-medium mt-1">
-                            {{ loginForm.errors.email }}
-                        </p>
-                    </div>
-
-                    <!-- Password Input -->
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <label class="block text-xs font-semibold text-slate-300">Kata Sandi</label>
-                            <a href="#" class="text-[11px] text-orange-400 hover:text-orange-300 font-medium">Lupa sandi?</a>
-                        </div>
-                        <div class="relative">
-                            <Lock class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
-                            <input
-                                v-model="loginForm.password"
-                                :type="showPassword ? 'text' : 'password'"
-                                required
-                                placeholder="••••••••"
-                                class="w-full h-10.5 pl-10 pr-10 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium transition-all focus:outline-none"
-                            />
-                            <button
-                                type="button"
-                                @click="showPassword = !showPassword"
-                                class="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300"
-                            >
-                                <Eye v-if="!showPassword" class="h-4 w-4" />
-                                <EyeOff v-else class="h-4 w-4" />
-                            </button>
-                        </div>
-                        <p v-if="loginForm.errors.password" class="text-[11px] text-rose-400 font-medium mt-1">
-                            {{ loginForm.errors.password }}
-                        </p>
-                    </div>
-
-                    <!-- Remember Me Checkbox -->
-                    <div class="flex items-center justify-between pt-1">
-                        <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-400 select-none">
-                            <input
-                                type="checkbox"
-                                v-model="loginForm.remember"
-                                class="h-4 w-4 rounded bg-slate-950 border-slate-700 text-orange-500 focus:ring-orange-500/20 focus:ring-offset-0"
-                            />
-                            <span>Ingat saya di perangkat ini</span>
-                        </label>
-                    </div>
-
-                    <!-- Submit Button with Loading Animation -->
-                    <button
-                        type="submit"
-                        :disabled="loginForm.processing"
-                        class="w-full h-11 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:opacity-95 active:scale-98 text-white font-bold text-xs shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none mt-2"
-                    >
-                        <Loader2 v-if="loginForm.processing" class="h-4 w-4 animate-spin" />
-                        <span v-if="loginForm.processing">Memverifikasi Kredensial...</span>
-                        <span v-else class="flex items-center gap-2">
-                            <span>Masuk ke Dashboard</span>
-                            <ArrowRight class="h-4 w-4" />
+                <!-- Top Brand Header -->
+                <div class="flex items-center gap-3.5">
+                    <img
+                        :src="($page.props as any).app_logo || '/images/logo_bnn.png'"
+                        alt="Logo Bimbel"
+                        class="h-12 w-auto object-contain rounded-2xl bg-white p-1 border border-slate-200/80 shadow-xs shrink-0"
+                    />
+                    <div>
+                        <span class="text-lg font-black tracking-tight text-slate-900 flex items-center gap-1">
+                            Bimbel No Name
                         </span>
-                    </button>
-                </form>
+                        <p class="text-xs font-semibold text-orange-600">Solusi Presensi & Monitoring Belajar Terpadu</p>
+                    </div>
+                </div>
 
-                <div class="mt-6 pt-4 border-t border-slate-800 text-center text-xs text-slate-400">
-                    Belum memiliki akun lembaga bimbel?
-                    <button @click="activeTab = 'register'" class="font-bold text-orange-400 hover:text-orange-300 ml-1">
-                        Daftar Lembaga Baru
-                    </button>
+                <!-- Center Content: AI Hero Image & Value Proposition -->
+                <div class="my-auto py-8 max-w-2xl mx-auto w-full">
+                    <!-- AI Hero Illustration Card -->
+                    <div class="relative rounded-3xl overflow-hidden shadow-xl shadow-slate-200/80 border border-white/80 bg-white p-2 sm:p-2.5 transition-transform hover:scale-[1.008] duration-300">
+                        <img
+                            src="/images/bimbel_login_hero.jpg"
+                            alt="Suasana Bimbingan Belajar Modern dan Interaktif"
+                            class="w-full h-auto max-h-[380px] sm:max-h-[420px] object-cover rounded-2xl"
+                        />
+                        <!-- Subtle floating overlay badge -->
+                        <div class="absolute bottom-5 left-5 right-5 sm:right-auto bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/90 shadow-md flex items-center gap-2.5 text-xs font-semibold text-slate-800">
+                            <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200"></span>
+                            <span>Presensi Presisi & Monitoring Belajar Siswa</span>
+                        </div>
+                    </div>
+
+                    <!-- Headline & Description (Replaces "multi tenant masa kini") -->
+                    <div class="mt-8 space-y-2.5 text-left">
+                        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+                            Sistem Presensi & Manajemen Bimbingan Belajar Terpadu
+                        </h1>
+                        <p class="text-sm text-slate-600 leading-relaxed max-w-xl">
+                            Pencatatan kehadiran presisi, jurnal materi pertemuan, foto dokumentasi kelas, dan pemantauan perkembangan siswa secara real-time dalam satu platform.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Bottom Feature Badges -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 border-t border-slate-200/60">
+                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-white shadow-xs">
+                        <div class="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <CheckCircle2 class="h-4 w-4" />
+                        </div>
+                        <span class="text-xs font-bold text-slate-700">Presensi & Foto Kelas</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-white shadow-xs">
+                        <div class="h-8 w-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                            <Users class="h-4 w-4" />
+                        </div>
+                        <span class="text-xs font-bold text-slate-700">Portal Wali Murid</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-white shadow-xs">
+                        <div class="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <ShieldCheck class="h-4 w-4" />
+                        </div>
+                        <span class="text-xs font-bold text-slate-700">Keamanan Terenkripsi</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- MODE 2: WIZARD REGISTRATION CARD (FULL EXPERIENCE) -->
-            <div
-                v-else
-                class="w-full max-w-3xl bg-slate-900/85 backdrop-blur-xl border border-slate-800/90 rounded-3xl p-6 sm:p-10 shadow-2xl relative transition-all duration-300"
-            >
+            <!-- RIGHT COLUMN: LIGHT SOFT LOGIN FORM (FULL-WIDTH ON MOBILE, CLEAN & FOCUSED) -->
+            <div class="w-full lg:w-5/12 xl:w-2/5 min-h-screen lg:min-h-0 bg-white flex flex-col justify-between p-5 sm:p-8 lg:p-12 relative shadow-sm">
+                <!-- Mobile Brand Header (Visible ONLY on mobile screens - Clean & Compact) -->
+                <div class="lg:hidden flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                    <img
+                        :src="($page.props as any).app_logo || '/images/logo_bnn.png'"
+                        alt="Logo Bimbel"
+                        class="h-11 w-auto object-contain rounded-2xl bg-white p-1 border border-slate-200/80 shadow-xs shrink-0"
+                    />
+                    <div>
+                        <span class="text-base font-black tracking-tight text-slate-900 block leading-tight">
+                            Bimbel No Name
+                        </span>
+                        <p class="text-xs font-semibold text-orange-600 mt-0.5">Presensi & Monitoring Belajar</p>
+                    </div>
+                </div>
+
+                <!-- Main Login Form Wrapper -->
+                <div class="my-auto max-w-md w-full mx-auto space-y-5">
+                    <!-- Title & Greeting -->
+                    <div class="space-y-1.5 text-left">
+                        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Selamat Datang Kembali</h2>
+                        <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                            Masukkan kredensial akun Anda untuk mengakses sistem presensi dan laporan belajar
+                        </p>
+                    </div>
+
+                    <!-- Parent / Wali Murid Friendly Login Guide Card -->
+                    <div class="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 flex items-start gap-3 text-xs shadow-xs">
+                        <div class="h-8 w-8 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <Users class="h-4 w-4" />
+                        </div>
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-amber-900 block text-[11px] sm:text-xs">Panduan Login Orang Tua / Siswa:</span>
+                            <p class="text-amber-800/90 leading-relaxed text-[11px]">
+                                Masukkan <strong>Nomor Induk Siswa (NIS)</strong> atau <strong>Email</strong> yang terdaftar, serta kata sandi yang telah dibagikan oleh pihak bimbel.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- LOGIN FORM -->
+                    <form @submit.prevent="submitLogin" class="space-y-4">
+                        <!-- Email or Username Input -->
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-700">NIS Siswa atau Email</label>
+                            <div class="relative">
+                                <User class="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                                <input
+                                    v-model="loginForm.email"
+                                    type="text"
+                                    required
+                                    placeholder="NIS (contoh: 261001) atau email terdaftar"
+                                    class="w-full h-12 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 text-sm text-slate-800 placeholder:text-slate-400 font-medium transition-all focus:outline-none"
+                                />
+                            </div>
+                            <p v-if="loginForm.errors.email" class="text-[11px] text-rose-500 font-medium mt-1">
+                                {{ loginForm.errors.email }}
+                            </p>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-slate-700">Kata Sandi</label>
+                            </div>
+                            <div class="relative">
+                                <Lock class="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                                <input
+                                    v-model="loginForm.password"
+                                    :type="showPassword ? 'text' : 'password'"
+                                    required
+                                    placeholder="••••••••"
+                                    class="w-full h-12 pl-10 pr-11 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 text-sm text-slate-800 placeholder:text-slate-400 font-medium transition-all focus:outline-none"
+                                />
+                                <button
+                                    type="button"
+                                    @click="showPassword = !showPassword"
+                                    class="absolute right-2 top-2 h-8 w-8 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                                >
+                                    <Eye v-if="!showPassword" class="h-4 w-4" />
+                                    <EyeOff v-else class="h-4 w-4" />
+                                </button>
+                            </div>
+                            <p v-if="loginForm.errors.password" class="text-[11px] text-rose-500 font-medium mt-1">
+                                {{ loginForm.errors.password }}
+                            </p>
+                        </div>
+
+                        <!-- Remember Me Checkbox -->
+                        <div class="flex items-center justify-between pt-0.5">
+                            <label class="flex items-center gap-2.5 cursor-pointer text-xs text-slate-600 select-none py-1">
+                                <input
+                                    type="checkbox"
+                                    v-model="loginForm.remember"
+                                    class="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 focus:ring-offset-0"
+                                />
+                                <span class="font-medium">Ingat saya di perangkat ini</span>
+                            </label>
+                        </div>
+
+                        <!-- Submit Button with Loading Animation -->
+                        <button
+                            type="submit"
+                            :disabled="loginForm.processing"
+                            class="w-full h-12 sm:h-12.5 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:opacity-95 active:scale-[0.99] text-white font-bold text-sm sm:text-base shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none mt-2 cursor-pointer"
+                        >
+                            <Loader2 v-if="loginForm.processing" class="h-4 w-4 animate-spin" />
+                            <span v-if="loginForm.processing">Memverifikasi Akun...</span>
+                            <span v-else class="flex items-center gap-2">
+                                <span>Masuk ke Akun</span>
+                                <ArrowRight class="h-4 w-4" />
+                            </span>
+                        </button>
+
+                        <!-- Help Assistance Link for Parents -->
+                        <div class="pt-2 text-center">
+                            <a
+                                href="https://wa.me/6281234567890?text=Halo%20Admin%20Bimbel,%20saya%20wali%20murid%20ingin%20menanyakan%20akun%20login%20ananda"
+                                target="_blank"
+                                class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-orange-600 transition-colors py-1.5 px-3 rounded-xl hover:bg-orange-50 cursor-pointer"
+                            >
+                                <Phone class="h-3.5 w-3.5 text-emerald-600" />
+                                <span>Lupa NIS atau kata sandi? Hubungi Admin Bimbel</span>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- FOOTER / COPYRIGHT BIMBEL NO NAME -->
+                <div class="pt-6 mt-6 border-t border-slate-100 text-center text-xs text-slate-400">
+                    <p>&copy; {{ new Date().getFullYear() }} Bimbel No Name. Seluruh hak cipta dilindungi.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- MODE 2: WIZARD REGISTRATION (KEPT FOR ROUTE / DIRECT URL ACCESS)          -->
+        <!-- ========================================================================= -->
+        <div v-else class="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-slate-50">
+            <div class="w-full max-w-3xl bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xl relative">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center text-white font-bold">
+                            <GraduationCap class="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black text-slate-900">Pendaftaran Lembaga Bimbel</h2>
+                            <p class="text-xs text-slate-500">Lengkapi formulir pendaftaran lembaga bimbingan belajar</p>
+                        </div>
+                    </div>
+                    <button
+                        @click="activeTab = 'login'"
+                        class="text-xs font-semibold text-orange-600 hover:text-orange-700 cursor-pointer"
+                    >
+                        Kembali ke Login
+                    </button>
+                </div>
+
                 <!-- Wizard Steps Progress Indicator -->
                 <div class="mb-8">
-                    <div class="flex items-center justify-between mb-3 text-xs">
-                        <span class="font-bold text-orange-400 uppercase tracking-wider text-[11px]">
+                    <div class="flex items-center justify-between mb-2 text-xs">
+                        <span class="font-bold text-orange-600 uppercase tracking-wider text-[11px]">
                             Langkah {{ currentStep }} dari 3:
-                            <span class="text-white">
+                            <span class="text-slate-800">
                                 {{ currentStep === 1 ? 'Identitas Lembaga Bimbel' : currentStep === 2 ? 'Akun Administrator Utama' : 'Pilihan Paket & Aktivasi' }}
                             </span>
                         </span>
                         <span class="text-slate-400 font-mono text-[11px]">{{ Math.round((currentStep / 3) * 100) }}% Selesai</span>
                     </div>
 
-                    <!-- Progress Bar with soft modern orange gradient -->
-                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                         <div
-                            class="bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 h-2 rounded-full transition-all duration-500 ease-out"
+                            class="bg-gradient-to-r from-orange-500 to-amber-500 h-2 rounded-full transition-all duration-500 ease-out"
                             :style="{ width: `${(currentStep / 3) * 100}%` }"
                         ></div>
                     </div>
 
-                    <!-- Step Pills -->
                     <div class="grid grid-cols-3 gap-2 mt-4">
                         <div
                             class="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold border transition-all"
-                            :class="currentStep >= 1 ? 'bg-orange-500/10 border-orange-500/30 text-orange-300' : 'bg-slate-950/40 border-slate-800 text-slate-600'"
+                            :class="currentStep >= 1 ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-slate-50 border-slate-200 text-slate-400'"
                         >
-                            <span class="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black" :class="currentStep > 1 ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-300'">
+                            <span class="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black" :class="currentStep > 1 ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-700'">
                                 <Check v-if="currentStep > 1" class="h-3 w-3" />
                                 <span v-else>1</span>
                             </span>
@@ -471,9 +543,9 @@ onMounted(() => {
 
                         <div
                             class="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold border transition-all"
-                            :class="currentStep >= 2 ? 'bg-orange-500/10 border-orange-500/30 text-orange-300' : 'bg-slate-950/40 border-slate-800 text-slate-600'"
+                            :class="currentStep >= 2 ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-slate-50 border-slate-200 text-slate-400'"
                         >
-                            <span class="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black" :class="currentStep > 2 ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-300'">
+                            <span class="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black" :class="currentStep > 2 ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-700'">
                                 <Check v-if="currentStep > 2" class="h-3 w-3" />
                                 <span v-else>2</span>
                             </span>
@@ -482,9 +554,9 @@ onMounted(() => {
 
                         <div
                             class="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold border transition-all"
-                            :class="currentStep === 3 ? 'bg-orange-500/10 border-orange-500/30 text-orange-300' : 'bg-slate-950/40 border-slate-800 text-slate-600'"
+                            :class="currentStep === 3 ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-slate-50 border-slate-200 text-slate-400'"
                         >
-                            <span class="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black bg-slate-800 text-slate-300">
+                            <span class="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-black bg-slate-200 text-slate-700">
                                 3
                             </span>
                             <span class="truncate">Paket & Selesai</span>
@@ -493,334 +565,208 @@ onMounted(() => {
                 </div>
 
                 <form @submit.prevent="submitRegister">
-                    <!-- ============================================== -->
-                    <!-- STEP 1: IDENTITAS LEMBAGA BIMBEL -->
-                    <!-- ============================================== -->
+                    <!-- STEP 1 -->
                     <div v-if="currentStep === 1" class="space-y-4">
-                        <div class="space-y-1 mb-4">
-                            <h3 class="text-lg font-bold text-white">Informasi Lembaga Bimbingan Belajar</h3>
-                            <p class="text-xs text-slate-400">Data ini akan menjadi identitas instansi pada cetakan laporan presensi dan notifikasi orang tua.</p>
-                        </div>
-
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <!-- Nama Lembaga -->
                             <div class="space-y-1.5 sm:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    Nama Lembaga Bimbel <span class="text-orange-400">*</span>
-                                </label>
+                                <label class="block text-xs font-bold text-slate-700">Nama Lembaga Bimbel <span class="text-rose-500">*</span></label>
                                 <div class="relative">
-                                    <Building2 class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+                                    <Building2 class="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                                     <input
                                         v-model="registerForm.institution_name"
                                         @input="handleNameChange"
                                         type="text"
-                                        placeholder="Contoh: Bimbel Prestasi Gemilang"
-                                        class="w-full h-10.5 pl-10 pr-4 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
+                                        required
+                                        placeholder="Contoh: Bimbel Bintang Cemerlang"
+                                        class="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
                                     />
                                 </div>
-                                <p v-if="step1Errors.institution_name || registerForm.errors.institution_name" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step1Errors.institution_name || registerForm.errors.institution_name }}
-                                </p>
+                                <p v-if="step1Errors.institution_name" class="text-[11px] text-rose-500 font-medium">{{ step1Errors.institution_name }}</p>
                             </div>
 
-                            <!-- Subdomain / Slug Lembaga -->
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    ID / URL Singkat Lembaga <span class="text-orange-400">*</span>
-                                </label>
-                                <div class="relative flex rounded-xl bg-slate-950/80 border border-slate-700/80 focus-within:border-orange-500 focus-within:ring-3 focus-within:ring-orange-500/20 overflow-hidden">
-                                    <input
-                                        v-model="registerForm.slug"
-                                        type="text"
-                                        placeholder="prestasigemilang"
-                                        class="w-full h-10.5 px-3 text-xs bg-transparent text-white font-mono placeholder:text-slate-600 focus:outline-none"
-                                    />
-                                    <span class="flex items-center px-3 bg-slate-800/80 text-[10px] text-slate-400 font-medium border-l border-slate-700">
-                                        .bimbel.id
-                                    </span>
-                                </div>
-                                <p v-if="step1Errors.slug || registerForm.errors.slug" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step1Errors.slug || registerForm.errors.slug }}
-                                </p>
+                                <label class="block text-xs font-bold text-slate-700">ID Lembaga (Subdomain) <span class="text-rose-500">*</span></label>
+                                <input
+                                    v-model="registerForm.slug"
+                                    type="text"
+                                    required
+                                    placeholder="bintang-cemerlang"
+                                    class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
+                                />
+                                <p v-if="step1Errors.slug" class="text-[11px] text-rose-500 font-medium">{{ step1Errors.slug }}</p>
                             </div>
 
-                            <!-- Kota Domisili -->
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    Kota / Kabupaten <span class="text-orange-400">*</span>
-                                </label>
-                                <div class="relative">
-                                    <MapPin class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
-                                    <input
-                                        v-model="registerForm.city"
-                                        type="text"
-                                        placeholder="Contoh: Bandung"
-                                        class="w-full h-10.5 pl-10 pr-4 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
-                                    />
-                                </div>
-                                <p v-if="step1Errors.city || registerForm.errors.city" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step1Errors.city || registerForm.errors.city }}
-                                </p>
+                                <label class="block text-xs font-bold text-slate-700">Kota Domisili <span class="text-rose-500">*</span></label>
+                                <input
+                                    v-model="registerForm.city"
+                                    type="text"
+                                    required
+                                    placeholder="Contoh: Jakarta Selatan"
+                                    class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
+                                />
+                                <p v-if="step1Errors.city" class="text-[11px] text-rose-500 font-medium">{{ step1Errors.city }}</p>
                             </div>
 
-                            <!-- Telepon Lembaga -->
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    No. WhatsApp Lembaga <span class="text-orange-400">*</span>
-                                </label>
-                                <div class="relative">
-                                    <Phone class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
-                                    <input
-                                        v-model="registerForm.phone"
-                                        type="text"
-                                        placeholder="081234567890"
-                                        class="w-full h-10.5 pl-10 pr-4 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
-                                    />
-                                </div>
-                                <p v-if="step1Errors.phone || registerForm.errors.phone" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step1Errors.phone || registerForm.errors.phone }}
-                                </p>
+                                <label class="block text-xs font-bold text-slate-700">Nomor Telepon Lembaga <span class="text-rose-500">*</span></label>
+                                <input
+                                    v-model="registerForm.phone"
+                                    type="text"
+                                    required
+                                    placeholder="081234567890"
+                                    class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
+                                />
+                                <p v-if="step1Errors.phone" class="text-[11px] text-rose-500 font-medium">{{ step1Errors.phone }}</p>
                             </div>
 
-                            <!-- Alamat Kantor -->
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-slate-300">Alamat Singkat Kantor</label>
+                                <label class="block text-xs font-bold text-slate-700">Alamat Lengkap Kantor</label>
                                 <input
                                     v-model="registerForm.address"
                                     type="text"
-                                    placeholder="Jl. Merdeka No. 12"
-                                    class="w-full h-10.5 px-3.5 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
+                                    placeholder="Jl. Pendidikan No. 123"
+                                    class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <!-- ============================================== -->
-                    <!-- STEP 2: AKUN ADMINISTRATOR UTAMA -->
-                    <!-- ============================================== -->
+                    <!-- STEP 2 -->
                     <div v-if="currentStep === 2" class="space-y-4">
-                        <div class="space-y-1 mb-4">
-                            <h3 class="text-lg font-bold text-white">Akun Administrator Lembaga</h3>
-                            <p class="text-xs text-slate-400">Akun ini memiliki hak akses penuh untuk mengelola guru/tutor, siswa, jadwal, dan sesi presensi.</p>
-                        </div>
-
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <!-- Nama Admin -->
                             <div class="space-y-1.5 sm:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    Nama Lengkap Penanggung Jawab / Admin <span class="text-orange-400">*</span>
-                                </label>
-                                <div class="relative">
-                                    <User class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
-                                    <input
-                                        v-model="registerForm.name"
-                                        type="text"
-                                        placeholder="Contoh: Muhammad Ilham, M.Pd."
-                                        class="w-full h-10.5 pl-10 pr-4 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
-                                    />
-                                </div>
-                                <p v-if="step2Errors.name || registerForm.errors.name" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step2Errors.name || registerForm.errors.name }}
-                                </p>
+                                <label class="block text-xs font-bold text-slate-700">Nama Penanggung Jawab / Admin Utama <span class="text-rose-500">*</span></label>
+                                <input
+                                    v-model="registerForm.name"
+                                    type="text"
+                                    required
+                                    placeholder="Contoh: Dr. Irwan Susanto, M.Pd"
+                                    class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
+                                />
+                                <p v-if="step2Errors.name" class="text-[11px] text-rose-500 font-medium">{{ step2Errors.name }}</p>
                             </div>
 
-                            <!-- Email Login Admin -->
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    Email Admin (Untuk Login) <span class="text-orange-400">*</span>
-                                </label>
-                                <div class="relative">
-                                    <Mail class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
-                                    <input
-                                        v-model="registerForm.email"
-                                        type="email"
-                                        placeholder="admin@bimbelanda.com"
-                                        class="w-full h-10.5 pl-10 pr-4 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
-                                    />
-                                </div>
-                                <p v-if="step2Errors.email || registerForm.errors.email" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step2Errors.email || registerForm.errors.email }}
-                                </p>
+                                <label class="block text-xs font-bold text-slate-700">Email Administrator <span class="text-rose-500">*</span></label>
+                                <input
+                                    v-model="registerForm.email"
+                                    type="email"
+                                    required
+                                    placeholder="admin@bimbelcemerlang.com"
+                                    class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
+                                />
+                                <p v-if="step2Errors.email" class="text-[11px] text-rose-500 font-medium">{{ step2Errors.email }}</p>
                             </div>
 
-                            <!-- WhatsApp Admin -->
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    No. WhatsApp Pribadi Admin <span class="text-orange-400">*</span>
-                                </label>
-                                <div class="relative">
-                                    <Phone class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
-                                    <input
-                                        v-model="registerForm.admin_phone"
-                                        type="text"
-                                        placeholder="081298765432"
-                                        class="w-full h-10.5 pl-10 pr-4 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
-                                    />
-                                </div>
-                                <p v-if="step2Errors.admin_phone || registerForm.errors.admin_phone" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step2Errors.admin_phone || registerForm.errors.admin_phone }}
-                                </p>
+                                <label class="block text-xs font-bold text-slate-700">WhatsApp Admin <span class="text-rose-500">*</span></label>
+                                <input
+                                    v-model="registerForm.admin_phone"
+                                    type="text"
+                                    required
+                                    placeholder="081299887766"
+                                    class="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
+                                />
+                                <p v-if="step2Errors.admin_phone" class="text-[11px] text-rose-500 font-medium">{{ step2Errors.admin_phone }}</p>
                             </div>
 
-                            <!-- Password -->
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    Kata Sandi Baru (Min. 8 Karakter) <span class="text-orange-400">*</span>
-                                </label>
+                                <label class="block text-xs font-bold text-slate-700">Kata Sandi (Min 8 Karakter) <span class="text-rose-500">*</span></label>
                                 <div class="relative">
-                                    <Lock class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
                                     <input
                                         v-model="registerForm.password"
                                         :type="showRegisterPassword ? 'text' : 'password'"
+                                        required
                                         placeholder="••••••••"
-                                        class="w-full h-10.5 pl-10 pr-10 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
+                                        class="w-full h-11 pl-4 pr-10 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
                                     />
-                                    <button
-                                        type="button"
-                                        @click="showRegisterPassword = !showRegisterPassword"
-                                        class="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300"
-                                    >
+                                    <button type="button" @click="showRegisterPassword = !showRegisterPassword" class="absolute right-3 top-3.5 text-slate-400">
                                         <Eye v-if="!showRegisterPassword" class="h-4 w-4" />
                                         <EyeOff v-else class="h-4 w-4" />
                                     </button>
                                 </div>
-                                <p v-if="step2Errors.password || registerForm.errors.password" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step2Errors.password || registerForm.errors.password }}
-                                </p>
+                                <p v-if="step2Errors.password" class="text-[11px] text-rose-500 font-medium">{{ step2Errors.password }}</p>
                             </div>
 
-                            <!-- Confirm Password -->
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-slate-300">
-                                    Konfirmasi Kata Sandi <span class="text-orange-400">*</span>
-                                </label>
+                                <label class="block text-xs font-bold text-slate-700">Konfirmasi Kata Sandi <span class="text-rose-500">*</span></label>
                                 <div class="relative">
-                                    <Lock class="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
                                     <input
                                         v-model="registerForm.password_confirmation"
                                         :type="showRegisterPasswordConfirm ? 'text' : 'password'"
+                                        required
                                         placeholder="••••••••"
-                                        class="w-full h-10.5 pl-10 pr-10 rounded-xl bg-slate-950/80 border border-slate-700/80 focus:border-orange-500 focus:ring-3 focus:ring-orange-500/20 text-xs text-white placeholder:text-slate-600 font-medium focus:outline-none"
+                                        class="w-full h-11 pl-4 pr-10 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 text-xs sm:text-sm text-slate-800"
                                     />
-                                    <button
-                                        type="button"
-                                        @click="showRegisterPasswordConfirm = !showRegisterPasswordConfirm"
-                                        class="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300"
-                                    >
+                                    <button type="button" @click="showRegisterPasswordConfirm = !showRegisterPasswordConfirm" class="absolute right-3 top-3.5 text-slate-400">
                                         <Eye v-if="!showRegisterPasswordConfirm" class="h-4 w-4" />
                                         <EyeOff v-else class="h-4 w-4" />
                                     </button>
                                 </div>
-                                <p v-if="step2Errors.password_confirmation || registerForm.errors.password_confirmation" class="text-[11px] text-rose-400 font-medium">
-                                    {{ step2Errors.password_confirmation || registerForm.errors.password_confirmation }}
-                                </p>
+                                <p v-if="step2Errors.password_confirmation" class="text-[11px] text-rose-500 font-medium">{{ step2Errors.password_confirmation }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ============================================== -->
-                    <!-- STEP 3: PAKET LAYANAN & FINALISASI -->
-                    <!-- ============================================== -->
-                    <div v-if="currentStep === 3" class="space-y-6">
-                        <div class="space-y-1">
-                            <h3 class="text-lg font-bold text-white">Pilih Paket Layanan & Skala Bimbel</h3>
-                            <p class="text-xs text-slate-400">Pilih paket masa uji coba untuk mengaktifkan database lembaga Anda.</p>
-                        </div>
-
-                        <!-- Package selection cards -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div
-                                v-for="pkg in packages"
-                                :key="pkg.id"
-                                @click="registerForm.package_type = pkg.id"
-                                class="cursor-pointer rounded-2xl p-4 border transition-all relative overflow-hidden"
-                                :class="registerForm.package_type === pkg.id ? 'bg-orange-500/10 border-orange-500 ring-2 ring-orange-500/30' : 'bg-slate-950/40 border-slate-800 hover:border-slate-700'"
-                            >
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" :class="pkg.recommended ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-300'">
-                                        {{ pkg.tag }}
-                                    </span>
-                                    <div
-                                        class="h-4 w-4 rounded-full border flex items-center justify-center text-white"
-                                        :class="registerForm.package_type === pkg.id ? 'bg-orange-500 border-orange-500' : 'border-slate-700'"
-                                    >
-                                        <Check v-if="registerForm.package_type === pkg.id" class="h-2.5 w-2.5" />
+                    <!-- STEP 3 -->
+                    <div v-if="currentStep === 3" class="space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">Pilih Paket Layanan</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div
+                                    v-for="pkg in packages"
+                                    :key="pkg.id"
+                                    @click="registerForm.package_type = pkg.id"
+                                    class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between"
+                                    :class="registerForm.package_type === pkg.id ? 'border-orange-500 bg-orange-50/50' : 'border-slate-200 hover:border-slate-300'"
+                                >
+                                    <div>
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{{ pkg.tag }}</span>
+                                        <h4 class="font-bold text-sm text-slate-900 mt-2">{{ pkg.name }}</h4>
+                                        <p class="text-xs text-slate-500 mt-1">{{ pkg.desc }}</p>
                                     </div>
+                                    <span class="font-black text-sm text-orange-600 mt-4">{{ pkg.price }}</span>
                                 </div>
-                                <h4 class="font-bold text-sm text-white">{{ pkg.name }}</h4>
-                                <p class="text-base font-black text-orange-400 mt-1">{{ pkg.price }}</p>
-                                <p class="text-[11px] text-slate-400 mt-1.5 leading-snug">{{ pkg.desc }}</p>
                             </div>
                         </div>
 
-                        <!-- Educational Program Badges -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-semibold text-slate-300">
-                                Jenjang Program yang Dibuka (Bisa pilih lebih dari satu):
-                            </label>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">Jenjang Pendidikan yang Disediakan</label>
                             <div class="flex flex-wrap gap-2">
                                 <button
-                                    v-for="lvl in educationalLevels"
-                                    :key="lvl"
+                                    v-for="level in educationalLevels"
+                                    :key="level"
                                     type="button"
-                                    @click="toggleLevel(lvl)"
-                                    class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5"
-                                    :class="registerForm.service_levels.includes(lvl) ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:border-slate-700'"
+                                    @click="toggleLevel(level)"
+                                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all border"
+                                    :class="registerForm.service_levels.includes(level) ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'"
                                 >
-                                    <Check v-if="registerForm.service_levels.includes(lvl)" class="h-3 w-3" />
-                                    <span>{{ lvl }}</span>
+                                    {{ level }}
                                 </button>
                             </div>
                         </div>
-
-                        <!-- Confirmation Preview Summary Card -->
-                        <div class="rounded-2xl bg-slate-950/80 border border-slate-800 p-4 space-y-2 text-xs">
-                            <div class="flex items-center gap-2 text-orange-400 font-bold">
-                                <ShieldCheck class="h-4 w-4" />
-                                <span>Ringkasan Data Lembaga Baru</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 text-[11px] pt-1">
-                                <div>
-                                    <span class="text-slate-500 block">Lembaga:</span>
-                                    <span class="font-semibold text-slate-200">{{ registerForm.institution_name }} ({{ registerForm.city }})</span>
-                                </div>
-                                <div>
-                                    <span class="text-slate-500 block">Domain Singkat:</span>
-                                    <span class="font-mono text-orange-300">{{ registerForm.slug }}.bimbel.id</span>
-                                </div>
-                                <div>
-                                    <span class="text-slate-500 block">Admin Pengelola:</span>
-                                    <span class="font-semibold text-slate-200">{{ registerForm.name }}</span>
-                                </div>
-                                <div>
-                                    <span class="text-slate-500 block">Email Login:</span>
-                                    <span class="font-semibold text-slate-200">{{ registerForm.email }}</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
-                    <!-- WIZARD BUTTON CONTROLS (With Loading Animations) -->
-                    <div class="flex items-center justify-between pt-6 mt-6 border-t border-slate-800">
-                        <!-- Back Button -->
+                    <!-- CONTROLS -->
+                    <div class="flex items-center justify-between pt-6 mt-6 border-t border-slate-200">
                         <button
                             v-if="currentStep > 1"
                             @click="prevStep"
                             type="button"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all active:scale-95"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
                         >
                             <ArrowLeft class="h-4 w-4" />
                             <span>Kembali</span>
                         </button>
                         <div v-else></div>
 
-                        <!-- Next / Submit Button with Loading State -->
                         <button
                             v-if="currentStep < 3"
                             @click="nextStep"
                             type="button"
                             :disabled="isStepLoading"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-95 text-white text-xs font-bold shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all disabled:opacity-50 cursor-pointer"
                         >
                             <Loader2 v-if="isStepLoading" class="h-4 w-4 animate-spin" />
                             <span v-if="isStepLoading">Memvalidasi...</span>
@@ -834,7 +780,7 @@ onMounted(() => {
                             v-else
                             type="submit"
                             :disabled="registerForm.processing"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:opacity-95 text-white text-xs font-bold shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:opacity-95 text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all disabled:opacity-50 cursor-pointer"
                         >
                             <Loader2 v-if="registerForm.processing" class="h-4 w-4 animate-spin" />
                             <span v-if="registerForm.processing">Mendaftarkan Lembaga...</span>
@@ -845,12 +791,11 @@ onMounted(() => {
                         </button>
                     </div>
                 </form>
-            </div>
-        </main>
 
-        <!-- FOOTER -->
-        <footer class="w-full max-w-7xl mx-auto px-4 sm:px-8 py-5 text-center text-xs text-slate-500 z-10">
-            <p>&copy; 2026 AbsensiBimbel.id &bull; Arsitektur Multi-Tenant Terisolasi Aman &bull; Stack Laravel 13 + Vue 3 SPA</p>
-        </footer>
+                <div class="pt-6 mt-6 border-t border-slate-100 text-center text-xs text-slate-400">
+                    <p>&copy; {{ new Date().getFullYear() }} Bimbel No Name. Seluruh hak cipta dilindungi.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </template>

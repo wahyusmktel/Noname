@@ -1,0 +1,23 @@
+# ==============================================================================
+# SNIPPET KONFIGURASI CLOUDFLARE TUNNEL (config.yml)
+# Tambahkan baris di bawah ini ke dalam blok `ingress:` pada file
+# /etc/cloudflared/config.yml di server Anda.
+# ==============================================================================
+
+ingress:
+  # 1. Domain Utama Production
+  - hostname: bimbelnoname.com
+    service: http://127.0.0.1:8081
+  - hostname: www.bimbelnoname.com
+    service: http://127.0.0.1:8081
+
+  # 2. Subdomain Staging / Dev
+  - hostname: dev.bimbelnoname.com
+    service: http://127.0.0.1:8082
+
+  # (Pertahankan baris existing untuk imbospringsewu.com di sini)
+  # - hostname: imbospringsewu.com
+  #   service: http://127.0.0.1:...
+
+  # Fallback catch-all default
+  - service: http_status:404

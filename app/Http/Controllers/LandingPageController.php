@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use App\Models\TenantLandingSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,6 +19,15 @@ class LandingPageController extends Controller
     {
         // Cari profil lembaga Bimbel No Name di database
         $bimbel = Tenant::where('slug', 'bimbel-no-name')->first() ?? Tenant::first();
+
+        $defaults = TenantLandingSetting::getDefaults();
+
+        $landingSetting = null;
+        if ($bimbel) {
+            $landingSetting = Cache::remember("tenant_landing_{$bimbel->id}", 3600, function () use ($bimbel) {
+                return $bimbel->landingSetting;
+            });
+        }
 
         $bimbelData = [
             'name'            => $bimbel ? $bimbel->name : 'Bimbel No Name',
@@ -37,43 +48,28 @@ class LandingPageController extends Controller
             'facebook_url'    => $bimbel ? $bimbel->facebook_url : null,
         ];
 
-        // 3 Slider Interaktif Berfokus pada Kualitas Pendidikan & Pengajaran
-        $slides = [
-            [
-                'id'          => 1,
-                'badge'       => 'Standar Pengajaran Unggul',
-                'title'       => 'Pendidikan Berkualitas dengan Pendampingan Tutor Berdedikasi',
-                'subtitle'    => 'Metode pengajaran interaktif dan mendalam untuk membangun pemahaman konsep secara tuntas, bukan sekadar menghafal rumus.',
-                'image'       => '/images/slide_quality_tutor.jpg',
-                'tag'         => 'Tutor Berpengalaman',
-            ],
-            [
-                'id'          => 2,
-                'badge'       => 'Fasilitas & Suasana Nyaman',
-                'title'       => 'Lingkungan Belajar Kondusif untuk Fokus Maksimal',
-                'subtitle'    => 'Kelas berukuran kecil didukung sarana belajar modern menciptakan suasana yang bersahabat dan memacu semangat belajar siswa.',
-                'image'       => '/images/slide_modern_class.jpg',
-                'tag'         => 'Kelas Kecil & Terarah',
-            ],
-            [
-                'id'          => 3,
-                'badge'       => 'Evaluasi & Capaian Prestasi',
-                'title'       => 'Bimbingan Terarah Menuju Prestasi Akademik Terbaik',
-                'subtitle'    => 'Pemantauan perkembangan belajar yang terukur dan berkala membantu siswa meraih potensi terbaik dan percaya diri dalam menghadapi ujian.',
-                'image'       => '/images/slide_student_success.jpg',
-                'tag'         => 'Capaian Terukur',
-            ],
-        ];
+        // Ambil data dinamis atau fallback ke standar bawaan
+        $slides         = ($landingSetting && !empty($landingSetting->hero_slides)) ? $landingSetting->hero_slides : $defaults['hero_slides'];
+        $qualityHeader  = ($landingSetting && !empty($landingSetting->quality_header)) ? $landingSetting->quality_header : $defaults['quality_header'];
+        $qualitySlides  = ($landingSetting && !empty($landingSetting->quality_items)) ? $landingSetting->quality_items : $defaults['quality_items'];
+        $parentCta      = ($landingSetting && !empty($landingSetting->parent_cta)) ? $landingSetting->parent_cta : $defaults['parent_cta'];
+        $tentorCta      = ($landingSetting && !empty($landingSetting->tentor_cta)) ? $landingSetting->tentor_cta : $defaults['tentor_cta'];
+        $navbarSubtitle = ($landingSetting && !empty($landingSetting->navbar_subtitle)) ? $landingSetting->navbar_subtitle : $defaults['navbar_subtitle'];
 
         $stats = [];
         $programs = [];
 
         return Inertia::render('Landing/Index', [
-            'bimbel'    => $bimbelData,
-            'slides'    => $slides,
-            'stats'     => $stats,
-            'programs'  => $programs,
-            'user'      => Auth::user() ? Auth::user()->loadMissing('tenant') : null,
+            'bimbel'         => $bimbelData,
+            'slides'         => $slides,
+            'qualityHeader'  => $qualityHeader,
+            'qualitySlides'  => $qualitySlides,
+            'parentCta'      => $parentCta,
+            'tentorCta'      => $tentorCta,
+            'navbarSubtitle' => $navbarSubtitle,
+            'stats'          => $stats,
+            'programs'       => $programs,
+            'user'           => Auth::user() ? Auth::user()->loadMissing('tenant') : null,
         ]);
     }
 }

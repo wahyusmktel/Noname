@@ -29,6 +29,7 @@ import {
     BadgeCheck,
     ShieldCheck,
     Database,
+    Globe,
 } from 'lucide-vue-next';
 import { useNotification } from '@/composables/useNotification';
 
@@ -181,6 +182,12 @@ const navigationMenus = computed<MenuItem[]>(() => {
                 { title: 'Profil Lembaga', href: '/lembaga/profil' },
                 { title: 'Tahun Pelajaran', href: '/academic-years' },
             ],
+        },
+        {
+            id: 'landing_cms',
+            title: 'Kelola Landing Page',
+            icon: Globe,
+            href: '/landing-page-settings',
         },
         {
             id: 'manajemen_data',

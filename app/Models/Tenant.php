@@ -72,4 +72,9 @@ class Tenant extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function landingSetting(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(TenantLandingSetting::class);
+    }
 }

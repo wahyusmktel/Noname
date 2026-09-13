@@ -59,6 +59,15 @@ interface Props {
         facebook_url?: string | null;
     };
     slides?: Slide[];
+    qualityHeader?: {
+        badge: string;
+        title: string;
+        subtitle: string;
+    };
+    qualitySlides?: any[];
+    parentCta?: any;
+    tentorCta?: any;
+    navbarSubtitle?: string;
     stats?: any;
     programs?: any[];
     user?: any;
@@ -84,8 +93,7 @@ const hasSocialMedia = computed(
 // Mobile Menu Drawer state
 const isMobileNavOpen = ref(false);
 
-// Slider Data (3 Slides focused on Quality)
-const heroSlides: Slide[] = props.slides && props.slides.length === 3 ? props.slides : [
+const defaultHeroSlides: Slide[] = [
     {
         id: 1,
         badge: 'Standar Pengajaran Unggul',
@@ -111,6 +119,14 @@ const heroSlides: Slide[] = props.slides && props.slides.length === 3 ? props.sl
         tag: 'Capaian Terukur',
     },
 ];
+
+// Slider Data (Dynamic with fallback)
+const heroSlides = computed<Slide[]>(() => {
+    if (props.slides && props.slides.length > 0) {
+        return props.slides;
+    }
+    return defaultHeroSlides;
+});
 
 const currentSlide = ref(0);
 let timer: any = null;
@@ -148,7 +164,7 @@ const goToSlide = (idx: number) => {
 const activeQualityIdx = ref(0);
 let qualityTimer: any = null;
 
-const qualitySlides = [
+const defaultQualitySlides = [
     {
         id: 1,
         title: 'Kurikulum & Modul Terstruktur',
@@ -192,6 +208,23 @@ const qualitySlides = [
         ],
     },
 ];
+
+const qualitySlides = computed(() => {
+    if (props.qualitySlides && props.qualitySlides.length > 0) {
+        const icons = [BookOpen, Users, Award];
+        const colors = [
+            'text-amber-600 bg-amber-50 border-amber-200/80',
+            'text-orange-600 bg-orange-50 border-orange-200/80',
+            'text-emerald-600 bg-emerald-50 border-emerald-200/80',
+        ];
+        return props.qualitySlides.map((item: any, idx: number) => ({
+            ...item,
+            icon: icons[idx % icons.length],
+            color: colors[idx % colors.length],
+        }));
+    }
+    return defaultQualitySlides;
+});
 
 const startQualityAuto = () => {
     stopQualityAuto();
@@ -243,7 +276,9 @@ onUnmounted(() => {
                         <span class="text-lg sm:text-xl font-black tracking-tight text-slate-900 block leading-tight">
                             {{ bimbel.name }}
                         </span>
-                        <p class="text-[11px] font-semibold text-orange-600 hidden sm:block">Standar Kualitas Bimbingan Belajar Modern</p>
+                        <p class="text-[11px] font-semibold text-orange-600 hidden sm:block">
+                            {{ navbarSubtitle || 'Standar Kualitas Bimbingan Belajar Modern' }}
+                        </p>
                     </div>
                 </Link>
 
@@ -487,13 +522,13 @@ onUnmounted(() => {
                 <!-- Section Header -->
                 <div class="text-center max-w-3xl mx-auto space-y-3">
                     <span class="text-xs font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-3.5 py-1 rounded-full border border-orange-200/80 shadow-2xs">
-                        Standar & Dedikasi Kami
+                        {{ qualityHeader?.badge || 'Standar & Dedikasi Kami' }}
                     </span>
                     <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                        Mengutamakan Mutu Pembelajaran & Karakter Siswa
+                        {{ qualityHeader?.title || 'Mengutamakan Mutu Pembelajaran & Karakter Siswa' }}
                     </h2>
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        Kami percaya bahwa prestasi berkelanjutan bermula dari proses belajar yang terarah, suasana kelas yang suportif, dan pendampingan oleh pengajar yang mengayomi.
+                        {{ qualityHeader?.subtitle || 'Kami percaya bahwa prestasi berkelanjutan bermula dari proses belajar yang terarah, suasana kelas yang suportif, dan pendampingan oleh pengajar yang mengayomi.' }}
                     </p>
                 </div>
 
@@ -613,8 +648,8 @@ onUnmounted(() => {
                     <div class="lg:col-span-6 p-6 sm:p-8 lg:p-10 order-2 lg:order-1">
                         <div class="relative rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-slate-100 aspect-16/9 lg:aspect-4/3 max-h-[380px] lg:max-h-[440px] w-full">
                             <img
-                                src="/images/cta_parent_portal.jpg"
-                                alt="Orang Tua Memantau Kemajuan Belajar Siswa di Bimbel"
+                                :src="parentCta?.image || '/images/cta_parent_portal.jpg'"
+                                :alt="parentCta?.title || 'Orang Tua Memantau Kemajuan Belajar Siswa di Bimbel'"
                                 class="w-full h-full object-cover object-center"
                                 loading="lazy"
                             />
@@ -630,40 +665,40 @@ onUnmounted(() => {
                     <div class="lg:col-span-6 p-6 sm:p-10 lg:p-12 space-y-6 order-1 lg:order-2">
                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200/80 text-xs font-bold">
                             <ShieldCheck class="h-3.5 w-3.5 text-orange-500" />
-                            <span>Khusus Orang Tua & Wali Murid</span>
+                            <span>{{ parentCta?.badge || 'Khusus Orang Tua & Wali Murid' }}</span>
                         </div>
 
                         <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-snug">
-                            Pantau Kehadiran & Kemajuan Belajar Ananda dengan Mudah
+                            {{ parentCta?.title || 'Pantau Kehadiran & Kemajuan Belajar Ananda dengan Mudah' }}
                         </h3>
 
                         <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                            Bimbel menyediakan portal monitoring khusus bagi Ayah dan Bunda. Gunakan akun siswa (NIS / Email) yang telah diberikan untuk memantau aktivitas belajar ananda secara transparan langsung dari genggaman Anda.
+                            {{ parentCta?.desc || 'Bimbel menyediakan portal monitoring khusus bagi Ayah dan Bunda. Gunakan akun siswa (NIS / Email) yang telah diberikan untuk memantau aktivitas belajar ananda secara transparan langsung dari genggaman Anda.' }}
                         </p>
 
                         <!-- Benefit List -->
                         <div class="space-y-2.5 text-xs text-slate-600 font-medium">
-                            <div class="flex items-center gap-3">
+                            <div
+                                v-for="(point, ptIdx) in (parentCta?.points || [
+                                    'Melihat riwayat presensi kehadiran di setiap sesi kelas',
+                                    'Membaca rangkuman jurnal materi dan catatan perkembangan dari guru',
+                                    'Melihat foto dokumentasi kegiatan belajar anak di kelas'
+                                ])"
+                                :key="ptIdx"
+                                class="flex items-center gap-3"
+                            >
                                 <CheckCircle2 class="h-4 w-4 text-emerald-500 shrink-0" />
-                                <span>Melihat riwayat presensi kehadiran di setiap sesi kelas</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <CheckCircle2 class="h-4 w-4 text-emerald-500 shrink-0" />
-                                <span>Membaca rangkuman jurnal materi dan catatan perkembangan dari guru</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <CheckCircle2 class="h-4 w-4 text-emerald-500 shrink-0" />
-                                <span>Melihat foto dokumentasi kegiatan belajar anak di kelas</span>
+                                <span>{{ point }}</span>
                             </div>
                         </div>
 
                         <!-- CTA Button -->
                         <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                             <Link
-                                href="/login"
+                                :href="parentCta?.button_url || '/login'"
                                 class="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white font-bold text-sm shadow-md shadow-orange-500/25 hover:opacity-95 active:scale-95 transition-all"
                             >
-                                <span>Masuk ke Portal Orang Tua</span>
+                                <span>{{ parentCta?.button_text || 'Masuk ke Portal Orang Tua' }}</span>
                                 <ArrowRight class="h-4 w-4" />
                             </Link>
                         </div>
@@ -682,40 +717,40 @@ onUnmounted(() => {
                     <div class="lg:col-span-6 p-6 sm:p-10 lg:p-12 space-y-6 order-1">
                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 text-xs font-bold">
                             <GraduationCap class="h-3.5 w-3.5 text-amber-600" />
-                            <span>Portal Khusus Guru & Tentor Bimbel</span>
+                            <span>{{ tentorCta?.badge || 'Portal Khusus Guru & Tentor Bimbel' }}</span>
                         </div>
 
                         <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-snug">
-                            Kelola Presensi & Dokumentasi Mengajar dengan Cepat
+                            {{ tentorCta?.title || 'Kelola Presensi & Dokumentasi Mengajar dengan Cepat' }}
                         </h3>
 
                         <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                            Sistem presensi terpadu memudahkan Bapak dan Ibu guru mencatat kehadiran siswa di tiap sesi pertemuan, mengunggah foto dokumentasi kelas, dan mengisi jurnal materi bimbingan tanpa terbebani administrasi manual.
+                            {{ tentorCta?.desc || 'Sistem presensi terpadu memudahkan Bapak dan Ibu guru mencatat kehadiran siswa di tiap sesi pertemuan, mengunggah foto dokumentasi kelas, dan mengisi jurnal materi bimbingan tanpa terbebani administrasi manual.' }}
                         </p>
 
                         <!-- Benefit List for Teachers -->
                         <div class="space-y-2.5 text-xs text-slate-600 font-medium">
-                            <div class="flex items-center gap-3">
+                            <div
+                                v-for="(point, ptIdx) in (tentorCta?.points || [
+                                    'Buka sesi presensi dan catat kehadiran siswa per kelas secara instan',
+                                    'Unggah foto dokumentasi kelas langsung dari smartphone Anda',
+                                    'Isi jurnal materi ajar dan catatan perkembangan belajar siswa'
+                                ])"
+                                :key="ptIdx"
+                                class="flex items-center gap-3"
+                            >
                                 <CheckCircle2 class="h-4 w-4 text-emerald-500 shrink-0" />
-                                <span>Buka sesi presensi dan catat kehadiran siswa per kelas secara instan</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <CheckCircle2 class="h-4 w-4 text-emerald-500 shrink-0" />
-                                <span>Unggah foto dokumentasi kelas langsung dari smartphone Anda</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <CheckCircle2 class="h-4 w-4 text-emerald-500 shrink-0" />
-                                <span>Isi jurnal materi ajar dan catatan perkembangan belajar siswa</span>
+                                <span>{{ point }}</span>
                             </div>
                         </div>
 
                         <!-- CTA Button -->
                         <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                             <Link
-                                href="/login"
+                                :href="tentorCta?.button_url || '/login'"
                                 class="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-bold text-sm shadow-md shadow-orange-500/25 hover:opacity-95 active:scale-95 transition-all"
                             >
-                                <span>Masuk ke Portal Tentor</span>
+                                <span>{{ tentorCta?.button_text || 'Masuk ke Portal Tentor' }}</span>
                                 <ArrowRight class="h-4 w-4" />
                             </Link>
                         </div>
@@ -725,8 +760,8 @@ onUnmounted(() => {
                     <div class="lg:col-span-6 p-6 sm:p-8 lg:p-10 order-2">
                         <div class="relative rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-slate-100 aspect-16/9 lg:aspect-4/3 max-h-[380px] lg:max-h-[440px] w-full">
                             <img
-                                src="/images/cta_tentor_portal.jpg"
-                                alt="Tutor Bimbel Menggunakan Aplikasi Presensi dan Jurnal Belajar"
+                                :src="tentorCta?.image || '/images/cta_tentor_portal.jpg'"
+                                :alt="tentorCta?.title || 'Tutor Bimbel Menggunakan Aplikasi Presensi dan Jurnal Belajar'"
                                 class="w-full h-full object-cover object-center"
                                 loading="lazy"
                             />

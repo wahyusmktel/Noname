@@ -32,6 +32,11 @@ Route::middleware('auth')->group(function () {
         Route::match(['put', 'post'], '/profil', [InstitutionProfileController::class, 'update'])->name('profile.update');
     });
 
+    // Modul CMS Kelola Landing Page Dinamis
+    Route::get('/landing-page-settings', [\App\Http\Controllers\LandingPageSettingController::class, 'edit'])->name('landing-settings.edit');
+    Route::post('/landing-page-settings', [\App\Http\Controllers\LandingPageSettingController::class, 'update'])->name('landing-settings.update');
+    Route::post('/landing-page-settings/reset', [\App\Http\Controllers\LandingPageSettingController::class, 'resetDefaults'])->name('landing-settings.reset');
+
     // Modul Tentor (Guru Bimbel)
     Route::post('/tentors/generate-accounts', [\App\Http\Controllers\TentorController::class, 'generateAccounts'])->name('tentors.generate-accounts');
     Route::get('/tentors/export-accounts', [\App\Http\Controllers\TentorController::class, 'exportAccounts'])->name('tentors.export-accounts');

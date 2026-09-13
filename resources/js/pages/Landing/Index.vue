@@ -134,7 +134,8 @@ let timer: any = null;
 const startAutoSlide = () => {
     stopAutoSlide();
     timer = setInterval(() => {
-        currentSlide.value = (currentSlide.value + 1) % heroSlides.length;
+        const len = heroSlides.value.length || 1;
+        currentSlide.value = (currentSlide.value + 1) % len;
     }, 6000);
 };
 
@@ -146,12 +147,14 @@ const stopAutoSlide = () => {
 };
 
 const nextSlide = () => {
-    currentSlide.value = (currentSlide.value + 1) % heroSlides.length;
+    const len = heroSlides.value.length || 1;
+    currentSlide.value = (currentSlide.value + 1) % len;
     startAutoSlide();
 };
 
 const prevSlide = () => {
-    currentSlide.value = (currentSlide.value - 1 + heroSlides.length) % heroSlides.length;
+    const len = heroSlides.value.length || 1;
+    currentSlide.value = (currentSlide.value - 1 + len) % len;
     startAutoSlide();
 };
 
@@ -229,7 +232,8 @@ const qualitySlides = computed(() => {
 const startQualityAuto = () => {
     stopQualityAuto();
     qualityTimer = setInterval(() => {
-        activeQualityIdx.value = (activeQualityIdx.value + 1) % qualitySlides.length;
+        const len = qualitySlides.value.length || 1;
+        activeQualityIdx.value = (activeQualityIdx.value + 1) % len;
     }, 5000);
 };
 

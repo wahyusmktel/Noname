@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import { useNotification } from '@/composables/useNotification';
 import {
     Globe,

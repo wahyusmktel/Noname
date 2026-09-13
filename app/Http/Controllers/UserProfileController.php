@@ -104,16 +104,24 @@ class UserProfileController extends Controller
 
             // Sinkronkan ke profil Tentor jika user adalah guru
             if ($user->role === 'tutor') {
-                Tentor::where('user_id', $user->id)
-                    ->orWhere('email', $user->email)
-                    ->update(['photo' => $path]);
+                $query = Tentor::where('user_id', $user->id);
+                if (!empty($user->email)) {
+                    $query->orWhere(function ($q) use ($user) {
+                        $q->whereNotNull('email')->where('email', $user->email);
+                    });
+                }
+                $query->update(['photo' => $path]);
             }
 
             // Sinkronkan ke profil Student jika user adalah siswa
             if ($user->role === 'siswa' || $user->role === 'orang_tua') {
-                Student::where('user_id', $user->id)
-                    ->orWhere('username', $user->username)
-                    ->update(['photo' => $path]);
+                $query = Student::where('user_id', $user->id);
+                if (!empty($user->username)) {
+                    $query->orWhere(function ($q) use ($user) {
+                        $q->whereNotNull('username')->where('username', $user->username);
+                    });
+                }
+                $query->update(['photo' => $path]);
             }
 
             return back()->with('success', 'Foto profil berhasil diperbarui.');
@@ -145,15 +153,23 @@ class UserProfileController extends Controller
             $user->save();
 
             if ($user->role === 'tutor') {
-                Tentor::where('user_id', $user->id)
-                    ->orWhere('email', $user->email)
-                    ->update(['photo' => null]);
+                $query = Tentor::where('user_id', $user->id);
+                if (!empty($user->email)) {
+                    $query->orWhere(function ($q) use ($user) {
+                        $q->whereNotNull('email')->where('email', $user->email);
+                    });
+                }
+                $query->update(['photo' => null]);
             }
 
             if ($user->role === 'siswa' || $user->role === 'orang_tua') {
-                Student::where('user_id', $user->id)
-                    ->orWhere('username', $user->username)
-                    ->update(['photo' => null]);
+                $query = Student::where('user_id', $user->id);
+                if (!empty($user->username)) {
+                    $query->orWhere(function ($q) use ($user) {
+                        $q->whereNotNull('username')->where('username', $user->username);
+                    });
+                }
+                $query->update(['photo' => null]);
             }
 
             return back()->with('success', 'Foto profil berhasil dihapus.');

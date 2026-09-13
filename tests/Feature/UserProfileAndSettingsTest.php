@@ -133,4 +133,63 @@ class UserProfileAndSettingsTest extends TestCase
         ]);
         $this->actingAs($studentUser)->get('/help-center')->assertStatus(200);
     }
+
+    public function test_tutor_photo_update_only_updates_their_own_tentor_profile(): void
+    {
+        Storage::fake('public');
+
+        $tutor1 = User::create([
+            'tenant_id' => $this->tenant->id,
+            'name'      => 'Guru Satu',
+            'username'  => '261001',
+            'email'     => null, // no email
+            'password'  => Hash::make('password123'),
+            'role'      => 'tutor',
+            'status'    => 'active',
+        ]);
+
+        $tentor1 = Tentor::create([
+            'tenant_id' => $this->tenant->id,
+            'user_id'   => $tutor1->id,
+            'name'      => 'Guru Satu',
+            'photo'     => 'tentors/photo1.png',
+            'status'    => 'active',
+        ]);
+
+        $tutor2 = User::create([
+            'tenant_id' => $this->tenant->id,
+            'name'      => 'Guru Dua',
+            'username'  => '261002',
+            'email'     => null, // no email
+            'password'  => Hash::make('password123'),
+            'role'      => 'tutor',
+            'status'    => 'active',
+        ]);
+
+        $tentor2 = Tentor::create([
+            'tenant_id' => $this->tenant->id,
+            'user_id'   => $tutor2->id,
+            'name'      => 'Guru Dua',
+            'photo'     => 'tentors/photo2.png',
+            'status'    => 'active',
+        ]);
+
+        $file = UploadedFile::fake()->image('avatar_new.jpg', 200, 200);
+
+        $response = $this->actingAs($tutor1)->post('/user/profile/photo', [
+            'photo' => $file,
+        ]);
+
+        $response->assertSessionHas('success');
+
+        $tentor1->refresh();
+        $tentor2->refresh();
+
+        // Tentor 1 should have the new photo
+        $this->assertNotNull($tentor1->photo);
+        $this->assertStringStartsWith('avatars/', $tentor1->photo);
+
+        // Tentor 2 MUST NOT be modified!
+        $this->assertEquals('tentors/photo2.png', $tentor2->photo);
+    }
 }

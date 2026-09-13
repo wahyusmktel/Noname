@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\SeoController;
+
+// Sitemap XML untuk Mesin Pencari
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 // Halaman Utama Publik / Landing Page
 Route::get('/', [LandingPageController::class, 'index'])->name('home');

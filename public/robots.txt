@@ -1,2 +1,18 @@
 User-agent: *
-Disallow:
+Allow: /
+Allow: /images/
+Allow: /build/
+Allow: /sitemap.xml
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /lembaga/*
+Disallow: /tentors/*
+Disallow: /students/*
+Disallow: /subjects/*
+Disallow: /study-groups/*
+Disallow: /landing-page-settings/*
+Disallow: /attendance-sessions/*
+Disallow: /attendances/*
+Disallow: /api/*
+
+Sitemap: https://bimbelnoname.com/sitemap.xml

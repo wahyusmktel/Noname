@@ -262,7 +262,17 @@ onUnmounted(() => {
 
 <template>
     <div class="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased selection:bg-orange-500 selection:text-white flex flex-col">
-        <Head :title="bimbel.name + ' - Bimbingan Belajar Berkualitas & Terpercaya'" />
+        <Head>
+            <title>{{ `${bimbel.name} - ${bimbel.tagline || 'Bimbingan Belajar Modern Berbasis Prestasi & Terpantau Real-Time'}` }}</title>
+            <meta name="description" :content="`${bimbel.name} adalah lembaga bimbingan belajar modern jenjang SD, SMP, SMA, dan persiapan SNBT/UTBK dengan tentor profesional, sistem absensi digital QR, dan laporan belajar real-time.`" />
+            <meta name="keywords" content="bimbel, bimbingan belajar, bimbel no name, les privat, bimbel sd smp sma, persiapan snbt, utbk, kedinasan, tentor berkualitas, absensi bimbel" />
+            <meta property="og:title" :content="`${bimbel.name} - ${bimbel.tagline || 'Bimbingan Belajar Modern Berbasis Prestasi'}`" />
+            <meta property="og:description" :content="`${bimbel.name} menyediakan bimbingan belajar terbaik dengan tentor berdedikasi dan sistem absensi digital real-time.`" />
+            <meta property="og:image" content="/images/og-banner.png" />
+            <meta name="twitter:title" :content="`${bimbel.name} - Bimbingan Belajar Modern`" />
+            <meta name="twitter:description" :content="`${bimbel.name} menyediakan program belajar intensif SD, SMP, SMA, dan persiapan SNBT/UTBK.`" />
+            <meta name="twitter:image" content="/images/og-banner.png" />
+        </Head>
 
         <!-- ========================================================================= -->
         <!-- 1. TOP NAVBAR (LIGHT SOFT & CLEAN)                                        -->

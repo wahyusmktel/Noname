@@ -290,6 +290,10 @@ const isParentOrStudent = computed(() => {
     return user.value?.role === 'siswa' || user.value?.role === 'orang_tua';
 });
 
+const isTutor = computed(() => {
+    return user.value?.role === 'tutor';
+});
+
 const notifications = computed(() => {
     const raw = (page.props as any).recent_notifications || [];
     return raw.map((item: any) => ({
@@ -410,10 +414,10 @@ const handleLogout = async () => {
                             <div class="flex items-center justify-between px-4 pb-2.5 border-b border-slate-100">
                                 <div>
                                     <span class="font-bold text-sm text-slate-800">
-                                        {{ isParentOrStudent ? 'Presensi Kehadiran Ananda' : 'Aktivitas Presensi Guru' }}
+                                        {{ isParentOrStudent ? 'Presensi Kehadiran Ananda' : (isTutor ? 'Presensi Mengajar Anda' : 'Aktivitas Presensi Guru') }}
                                     </span>
                                     <p class="text-[11px] text-slate-400">
-                                        {{ isParentOrStudent ? 'Pemberitahuan absensi kelas ananda' : 'Pemberitahuan absensi kelas terkini' }}
+                                        {{ isParentOrStudent ? 'Pemberitahuan absensi kelas ananda' : (isTutor ? 'Riwayat pencatatan presensi kelas Anda' : 'Pemberitahuan absensi kelas terkini') }}
                                     </p>
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -438,7 +442,7 @@ const handleLogout = async () => {
                                     class="py-8 text-center text-slate-400 text-xs px-4"
                                 >
                                     <CalendarCheck class="w-8 h-8 text-slate-300 mx-auto mb-2 opacity-60" />
-                                    {{ isParentOrStudent ? 'Belum ada pemberitahuan presensi ananda.' : 'Belum ada aktivitas absensi baru dari guru.' }}
+                                    {{ isParentOrStudent ? 'Belum ada pemberitahuan presensi ananda.' : (isTutor ? 'Belum ada riwayat presensi mengajar yang tercatat.' : 'Belum ada aktivitas absensi baru dari guru.') }}
                                 </div>
                                 <div
                                     v-for="item in notifications"
@@ -469,11 +473,11 @@ const handleLogout = async () => {
                             </div>
                             <div class="pt-2.5 px-4 border-t border-slate-100 text-center">
                                 <Link
-                                    :href="isParentOrStudent ? '/student/dashboard' : '/reports/tutor-attendance'"
+                                    :href="isParentOrStudent ? '/student/dashboard' : (isTutor ? '/tutor/attendance' : '/reports/tutor-attendance')"
                                     @click="isNotificationDropdownOpen = false"
                                     class="text-xs font-semibold text-orange-600 hover:text-orange-700 inline-flex items-center gap-1 hover:underline"
                                 >
-                                    <span>{{ isParentOrStudent ? 'Lihat Riwayat Kehadiran Ananda' : 'Lihat Semua Rekap Kehadiran Guru' }}</span>
+                                    <span>{{ isParentOrStudent ? 'Lihat Riwayat Kehadiran Ananda' : (isTutor ? 'Buka Form Presensi Mengajar' : 'Lihat Semua Rekap Kehadiran Guru') }}</span>
                                     <span>&rarr;</span>
                                 </Link>
                             </div>

@@ -61,7 +61,7 @@ class HandleInertiaRequests extends Middleware
                 }
 
                 try {
-                    // Notifikasi khusus Siswa / Orang Tua (Berkaitan langsung dengan absensi kehadiran ananda)
+                    // 1. Notifikasi khusus Siswa / Orang Tua (Berkaitan langsung dengan absensi kehadiran ananda)
                     if ($user->role === 'siswa' || $user->role === 'orang_tua') {
                         $student = \App\Models\Student::query()
                             ->where('user_id', $user->id)
@@ -98,28 +98,68 @@ class HandleInertiaRequests extends Middleware
                         })->values()->all();
                     }
 
-                    // Notifikasi untuk Admin & Tentor (Aktivitas presensi guru terkini)
-                    $sessions = \App\Models\AttendanceSession::query()
-                        ->where('tenant_id', $user->tenant_id)
-                        ->with(['tentor', 'studyGroup'])
-                        ->withCount('attendances')
-                        ->latest()
-                        ->limit(8)
-                        ->get();
+                    // 2. Notifikasi khusus Guru / Tentor (HANYA riwayat presensi mengajar dirinya sendiri)
+                    if ($user->role === 'tutor') {
+                        $tentor = $user->tentor ?? \App\Models\Tentor::query()
+                            ->where('user_id', $user->id)
+                            ->orWhere('email', $user->email)
+                            ->first();
 
-                    return $sessions->map(function ($s) {
-                        $tentorName = $s->tentor?->name ?? 'Tentor Bimbel';
-                        $groupName = $s->studyGroup?->name ?? 'Kelas Bimbel';
-                        $subjectName = $s->subject_name ?: 'Pelajaran';
-                        return [
-                            'id'         => (string) $s->id,
-                            'title'      => "Presensi Baru: {$tentorName}",
-                            'desc'       => "{$subjectName} • Kelompok {$groupName} ({$s->attendances_count} siswa dicatat)",
-                            'time'       => $s->created_at ? $s->created_at->diffForHumans() : 'Baru saja',
-                            'created_at' => $s->created_at ? $s->created_at->toIso8601String() : null,
-                            'url'        => '/reports/tutor-attendance',
-                        ];
-                    })->values()->all();
+                        if (!$tentor) {
+                            return [];
+                        }
+
+                        $mySessions = \App\Models\AttendanceSession::query()
+                            ->where('tenant_id', $user->tenant_id)
+                            ->where('tentor_id', $tentor->id)
+                            ->with(['studyGroup'])
+                            ->withCount('attendances')
+                            ->latest()
+                            ->limit(8)
+                            ->get();
+
+                        return $mySessions->map(function ($s) {
+                            $groupName = $s->studyGroup?->name ?? 'Kelas Bimbel';
+                            $subjectName = $s->subject_name ?: 'Pelajaran';
+                            $date = $s->date ? $s->date->translatedFormat('d M Y') : 'Hari ini';
+
+                            return [
+                                'id'         => (string) $s->id,
+                                'title'      => "Presensi Selesai: {$subjectName}",
+                                'desc'       => "Kelompok {$groupName} • {$s->attendances_count} siswa dicatat ({$date})",
+                                'time'       => $s->created_at ? $s->created_at->diffForHumans() : 'Baru saja',
+                                'created_at' => $s->created_at ? $s->created_at->toIso8601String() : null,
+                                'url'        => '/tutor/attendance',
+                            ];
+                        })->values()->all();
+                    }
+
+                    // 3. Notifikasi untuk Admin Lembaga & Superadmin (Aktivitas presensi seluruh guru)
+                    if ($user->role === 'admin_bimbel' || $user->isSuperAdmin()) {
+                        $sessions = \App\Models\AttendanceSession::query()
+                            ->where('tenant_id', $user->tenant_id)
+                            ->with(['tentor', 'studyGroup'])
+                            ->withCount('attendances')
+                            ->latest()
+                            ->limit(8)
+                            ->get();
+
+                        return $sessions->map(function ($s) {
+                            $tentorName = $s->tentor?->name ?? 'Tentor Bimbel';
+                            $groupName = $s->studyGroup?->name ?? 'Kelas Bimbel';
+                            $subjectName = $s->subject_name ?: 'Pelajaran';
+                            return [
+                                'id'         => (string) $s->id,
+                                'title'      => "Presensi Baru: {$tentorName}",
+                                'desc'       => "{$subjectName} • Kelompok {$groupName} ({$s->attendances_count} siswa dicatat)",
+                                'time'       => $s->created_at ? $s->created_at->diffForHumans() : 'Baru saja',
+                                'created_at' => $s->created_at ? $s->created_at->toIso8601String() : null,
+                                'url'        => '/reports/tutor-attendance',
+                            ];
+                        })->values()->all();
+                    }
+
+                    return [];
                 } catch (\Throwable $e) {
                     return [];
                 }

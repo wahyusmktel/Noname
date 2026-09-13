@@ -23,6 +23,10 @@ import {
     Upload,
     Image,
     Trash2,
+    Share2,
+    Instagram,
+    Facebook,
+    Youtube,
 } from 'lucide-vue-next';
 import { useNotification } from '@/composables/useNotification';
 
@@ -36,9 +40,14 @@ interface Props {
         logo?: string;
         logo_url?: string;
         phone: string;
+        phone_2?: string;
         whatsapp_sender?: string;
         email?: string;
         website?: string;
+        tiktok_url?: string;
+        instagram_url?: string;
+        youtube_url?: string;
+        facebook_url?: string;
         address?: string;
         city: string;
         province?: string;
@@ -75,9 +84,14 @@ const form = useForm({
     logo: null as File | null,
     remove_logo: false,
     phone: props.tenant.phone || '',
+    phone_2: props.tenant.phone_2 || '',
     whatsapp_sender: props.tenant.whatsapp_sender || props.tenant.phone || '',
     email: props.tenant.email || '',
     website: props.tenant.website || 'https://bimbelnoname.com',
+    tiktok_url: props.tenant.tiktok_url || '',
+    instagram_url: props.tenant.instagram_url || '',
+    youtube_url: props.tenant.youtube_url || '',
+    facebook_url: props.tenant.facebook_url || '',
     address: props.tenant.address || '',
     city: props.tenant.city || '',
     province: props.tenant.province || 'DKI Jakarta',
@@ -340,10 +354,10 @@ const resetForm = () => {
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <!-- Telepon / WhatsApp Resmi -->
+                        <!-- Telepon / WhatsApp 1 (Utama) -->
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-slate-700">
-                                Nomor Telepon / WhatsApp Kantor <span class="text-orange-500">*</span>
+                                Nomor Telepon / WhatsApp 1 (Utama) <span class="text-orange-500">*</span>
                             </label>
                             <div class="relative">
                                 <Phone class="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
@@ -355,6 +369,24 @@ const resetForm = () => {
                                     placeholder="0812-3456-7890"
                                 />
                             </div>
+                            <p v-if="form.errors.phone" class="text-[11px] text-rose-500 font-semibold mt-1">{{ form.errors.phone }}</p>
+                        </div>
+
+                        <!-- Telepon / WhatsApp 2 (Tambahan) -->
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-700">
+                                Nomor Telepon / WhatsApp 2 (Tambahan / CS)
+                            </label>
+                            <div class="relative">
+                                <Phone class="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                                <input
+                                    v-model="form.phone_2"
+                                    type="text"
+                                    class="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-orange-500 focus:ring-3 focus:ring-orange-500/15 text-xs text-slate-900 font-semibold transition-all focus:outline-none"
+                                    placeholder="0857-1234-5678"
+                                />
+                            </div>
+                            <p v-if="form.errors.phone_2" class="text-[11px] text-rose-500 font-semibold mt-1">{{ form.errors.phone_2 }}</p>
                         </div>
 
                         <!-- Email Resmi -->
@@ -386,7 +418,7 @@ const resetForm = () => {
                         </div>
 
                         <!-- Jam Operasional -->
-                        <div class="space-y-1.5">
+                        <div class="space-y-1.5 sm:col-span-2">
                             <label class="block text-xs font-bold text-slate-700">Jam Operasional Belajar</label>
                             <div class="relative">
                                 <Clock class="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
@@ -443,6 +475,83 @@ const resetForm = () => {
                                     class="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-orange-500 focus:ring-3 focus:ring-orange-500/15 text-xs text-slate-900 font-medium transition-all focus:outline-none"
                                     placeholder="12340"
                                 />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUBSECTION: AKUN MEDIA SOSIAL RESMI -->
+                    <div class="pt-6 border-t border-slate-100 space-y-4">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <Share2 class="h-4 w-4 text-orange-500" />
+                                <span>Akun Media Sosial Resmi Lembaga</span>
+                            </h4>
+                            <p class="text-xs text-slate-500 mt-0.5">Tautan media sosial ini akan ditampilkan pada kontak lembaga di halaman landing page untuk memudahkan calon siswa/orang tua mengikuti informasi terbaru.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- TikTok -->
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <span class="inline-flex items-center justify-center h-4 w-4 rounded-full bg-slate-900 text-white text-[9px] font-black">
+                                        <svg class="h-2.5 w-2.5 fill-current" viewBox="0 0 24 24">
+                                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.46V10.7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-2.04-.13z"/>
+                                        </svg>
+                                    </span>
+                                    <span>TikTok URL</span>
+                                </label>
+                                <input
+                                    v-model="form.tiktok_url"
+                                    type="text"
+                                    class="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-slate-900 focus:ring-3 focus:ring-slate-900/10 text-xs text-slate-900 font-medium transition-all focus:outline-none"
+                                    placeholder="https://www.tiktok.com/@bimbelnoname"
+                                />
+                                <p v-if="form.errors.tiktok_url" class="text-[11px] text-rose-500 font-semibold mt-1">{{ form.errors.tiktok_url }}</p>
+                            </div>
+
+                            <!-- Instagram -->
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <Instagram class="h-4 w-4 text-pink-600" />
+                                    <span>Instagram URL</span>
+                                </label>
+                                <input
+                                    v-model="form.instagram_url"
+                                    type="text"
+                                    class="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-pink-500 focus:ring-3 focus:ring-pink-500/15 text-xs text-slate-900 font-medium transition-all focus:outline-none"
+                                    placeholder="https://www.instagram.com/bimbelnoname"
+                                />
+                                <p v-if="form.errors.instagram_url" class="text-[11px] text-rose-500 font-semibold mt-1">{{ form.errors.instagram_url }}</p>
+                            </div>
+
+                            <!-- YouTube -->
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <Youtube class="h-4 w-4 text-red-600" />
+                                    <span>YouTube URL</span>
+                                </label>
+                                <input
+                                    v-model="form.youtube_url"
+                                    type="text"
+                                    class="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-red-500 focus:ring-3 focus:ring-red-500/15 text-xs text-slate-900 font-medium transition-all focus:outline-none"
+                                    placeholder="https://www.youtube.com/@bimbelnoname"
+                                />
+                                <p v-if="form.errors.youtube_url" class="text-[11px] text-rose-500 font-semibold mt-1">{{ form.errors.youtube_url }}</p>
+                            </div>
+
+                            <!-- Facebook -->
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <Facebook class="h-4 w-4 text-blue-600" />
+                                    <span>Facebook URL</span>
+                                </label>
+                                <input
+                                    v-model="form.facebook_url"
+                                    type="text"
+                                    class="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-600 focus:ring-3 focus:ring-blue-600/15 text-xs text-slate-900 font-medium transition-all focus:outline-none"
+                                    placeholder="https://www.facebook.com/bimbelnoname"
+                                />
+                                <p v-if="form.errors.facebook_url" class="text-[11px] text-rose-500 font-semibold mt-1">{{ form.errors.facebook_url }}</p>
                             </div>
                         </div>
                     </div>

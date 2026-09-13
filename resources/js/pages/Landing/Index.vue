@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import {
     GraduationCap,
@@ -23,6 +23,11 @@ import {
     Compass,
     Smile,
     HeartHandshake,
+    Instagram,
+    Facebook,
+    Youtube,
+    Share2,
+    ExternalLink,
 } from 'lucide-vue-next';
 
 interface Slide {
@@ -39,10 +44,19 @@ interface Props {
         name: string;
         tagline: string;
         phone: string;
+        phone_2?: string | null;
+        whatsapp_sender?: string | null;
         email: string;
+        website?: string | null;
         city: string;
         address: string;
+        operating_hours?: string | null;
         brand_color: string;
+        logo_url?: string;
+        tiktok_url?: string | null;
+        instagram_url?: string | null;
+        youtube_url?: string | null;
+        facebook_url?: string | null;
     };
     slides?: Slide[];
     stats?: any;
@@ -51,6 +65,21 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const formatWaUrl = (phone: string) => {
+    const cleaned = (phone || '').replace(/[^0-9]/g, '');
+    const formatted = cleaned.startsWith('0') ? '62' + cleaned.slice(1) : cleaned;
+    return `https://wa.me/${formatted}`;
+};
+
+const formatSocialUrl = (url?: string | null) => {
+    if (!url) return '';
+    return url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+};
+
+const hasSocialMedia = computed(
+    () => !!(props.bimbel.tiktok_url || props.bimbel.instagram_url || props.bimbel.youtube_url || props.bimbel.facebook_url)
+);
 
 // Mobile Menu Drawer state
 const isMobileNavOpen = ref(false);
@@ -731,24 +760,121 @@ onUnmounted(() => {
                         </p>
                     </div>
 
-                    <div class="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200/80 space-y-2.5 text-xs">
-                        <h4 class="font-bold text-xs uppercase tracking-wider text-slate-400 pb-2 border-b border-slate-100">Kontak Lembaga</h4>
-                        <div class="space-y-2 text-slate-600">
+                    <div class="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4 text-xs">
+                        <h4 class="font-bold text-xs uppercase tracking-wider text-slate-400 pb-2 border-b border-slate-100 flex items-center justify-between">
+                            <span>Kontak Lembaga</span>
+                            <span class="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Buka
+                            </span>
+                        </h4>
+
+                        <div class="space-y-2.5 text-slate-600">
                             <div class="flex items-start gap-2.5">
                                 <MapPin class="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
                                 <span class="leading-relaxed">{{ bimbel.address }}</span>
                             </div>
-                            <div class="flex items-center gap-2.5">
-                                <Phone class="h-4 w-4 text-orange-500 shrink-0" />
-                                <span>{{ bimbel.phone }}</span>
+
+                            <!-- Phone 1 (Utama) -->
+                            <div class="flex items-center justify-between gap-2.5">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <Phone class="h-4 w-4 text-orange-500 shrink-0" />
+                                    <div class="truncate">
+                                        <span class="font-semibold text-slate-700">{{ bimbel.phone }}</span>
+                                        <span class="text-[10px] text-slate-400 ml-1.5">(Utama)</span>
+                                    </div>
+                                </div>
+                                <a
+                                    :href="formatWaUrl(bimbel.phone)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors shrink-0"
+                                >
+                                    <span>WhatsApp</span>
+                                </a>
                             </div>
+
+                            <!-- Phone 2 (Tambahan / CS jika ada) -->
+                            <div v-if="bimbel.phone_2" class="flex items-center justify-between gap-2.5">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <Phone class="h-4 w-4 text-orange-500 shrink-0" />
+                                    <div class="truncate">
+                                        <span class="font-semibold text-slate-700">{{ bimbel.phone_2 }}</span>
+                                        <span class="text-[10px] text-slate-400 ml-1.5">(CS / Info)</span>
+                                    </div>
+                                </div>
+                                <a
+                                    :href="formatWaUrl(bimbel.phone_2)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors shrink-0"
+                                >
+                                    <span>WhatsApp</span>
+                                </a>
+                            </div>
+
+                            <!-- Email -->
                             <div class="flex items-center gap-2.5">
                                 <Mail class="h-4 w-4 text-orange-500 shrink-0" />
-                                <span>{{ bimbel.email }}</span>
+                                <a :href="'mailto:' + bimbel.email" class="hover:text-orange-600 transition-colors truncate">{{ bimbel.email }}</a>
                             </div>
+
+                            <!-- Jam Operasional -->
                             <div class="flex items-center gap-2.5">
                                 <Clock class="h-4 w-4 text-orange-500 shrink-0" />
-                                <span>Senin - Sabtu: 08:00 - 20:00 WIB</span>
+                                <span>{{ bimbel.operating_hours || 'Senin - Sabtu: 08:00 - 20:00 WIB' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Media Sosial Lembaga -->
+                        <div v-if="hasSocialMedia" class="pt-3 border-t border-slate-100 space-y-2">
+                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Media Sosial Kami</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a
+                                    v-if="bimbel.instagram_url"
+                                    :href="formatSocialUrl(bimbel.instagram_url)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200/80 font-medium text-xs transition-colors"
+                                >
+                                    <Instagram class="h-3.5 w-3.5 text-pink-600" />
+                                    <span>Instagram</span>
+                                </a>
+
+                                <a
+                                    v-if="bimbel.tiktok_url"
+                                    :href="formatSocialUrl(bimbel.tiktok_url)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-medium text-xs transition-colors"
+                                >
+                                    <svg class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/>
+                                    </svg>
+                                    <span>TikTok</span>
+                                </a>
+
+                                <a
+                                    v-if="bimbel.youtube_url"
+                                    :href="formatSocialUrl(bimbel.youtube_url)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 font-medium text-xs transition-colors"
+                                >
+                                    <Youtube class="h-3.5 w-3.5 text-red-600" />
+                                    <span>YouTube</span>
+                                </a>
+
+                                <a
+                                    v-if="bimbel.facebook_url"
+                                    :href="formatSocialUrl(bimbel.facebook_url)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 font-medium text-xs transition-colors"
+                                >
+                                    <Facebook class="h-3.5 w-3.5 text-blue-600" />
+                                    <span>Facebook</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -770,6 +896,52 @@ onUnmounted(() => {
                     <span class="font-bold text-slate-800 text-sm">{{ bimbel.name }}</span>
                     <span class="text-slate-300 hidden sm:inline">&bull;</span>
                     <span class="hidden sm:inline text-[11px] text-slate-500">{{ bimbel.city }}</span>
+                </div>
+
+                <!-- Social Icons in Footer -->
+                <div v-if="hasSocialMedia" class="flex items-center gap-3">
+                    <a
+                        v-if="bimbel.instagram_url"
+                        :href="formatSocialUrl(bimbel.instagram_url)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="h-8 w-8 rounded-full bg-slate-100 hover:bg-pink-50 hover:text-pink-600 text-slate-600 flex items-center justify-center transition-colors"
+                        title="Instagram"
+                    >
+                        <Instagram class="h-4 w-4" />
+                    </a>
+                    <a
+                        v-if="bimbel.tiktok_url"
+                        :href="formatSocialUrl(bimbel.tiktok_url)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 hover:text-slate-900 text-slate-600 flex items-center justify-center transition-colors"
+                        title="TikTok"
+                    >
+                        <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/>
+                        </svg>
+                    </a>
+                    <a
+                        v-if="bimbel.youtube_url"
+                        :href="formatSocialUrl(bimbel.youtube_url)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="h-8 w-8 rounded-full bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 flex items-center justify-center transition-colors"
+                        title="YouTube"
+                    >
+                        <Youtube class="h-4 w-4" />
+                    </a>
+                    <a
+                        v-if="bimbel.facebook_url"
+                        :href="formatSocialUrl(bimbel.facebook_url)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="h-8 w-8 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 flex items-center justify-center transition-colors"
+                        title="Facebook"
+                    >
+                        <Facebook class="h-4 w-4" />
+                    </a>
                 </div>
 
                 <div class="text-[11px] text-slate-500 text-center sm:text-right">

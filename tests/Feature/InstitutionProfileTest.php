@@ -66,6 +66,7 @@ class InstitutionProfileTest extends TestCase
             'tagline'          => 'Bimbingan Belajar Juara Berbasis Karakter',
             'description'      => 'Deskripsi lengkap bimbingan belajar...',
             'phone'            => '081299998888',
+            'phone_2'          => '085711112222',
             'whatsapp_sender'  => '081299998888',
             'email'            => 'kontak@bimbelnoname.com',
             'website'          => 'https://bimbelnoname.com',
@@ -75,6 +76,10 @@ class InstitutionProfileTest extends TestCase
             'postal_code'      => '12340',
             'operating_hours'  => 'Senin - Sabtu (08:00 - 20:00 WIB)',
             'brand_color'      => '#F97316',
+            'tiktok_url'       => 'https://www.tiktok.com/@bimbelnoname',
+            'instagram_url'    => 'https://www.instagram.com/bimbelnoname',
+            'youtube_url'      => 'https://www.youtube.com/@bimbelnoname',
+            'facebook_url'     => 'https://www.facebook.com/bimbelnoname',
         ]);
 
         $response->assertSessionHas('success');
@@ -84,8 +89,13 @@ class InstitutionProfileTest extends TestCase
             'name'             => 'Bimbel No Name Pusat',
             'tagline'          => 'Bimbingan Belajar Juara Berbasis Karakter',
             'phone'            => '081299998888',
+            'phone_2'          => '085711112222',
             'whatsapp_sender'  => '081299998888',
             'city'             => 'Jakarta Selatan',
+            'tiktok_url'       => 'https://www.tiktok.com/@bimbelnoname',
+            'instagram_url'    => 'https://www.instagram.com/bimbelnoname',
+            'youtube_url'      => 'https://www.youtube.com/@bimbelnoname',
+            'facebook_url'     => 'https://www.facebook.com/bimbelnoname',
         ]);
     }
 }

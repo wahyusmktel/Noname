@@ -215,6 +215,11 @@ class ManualAttendanceController extends Controller
      */
     public function destroy(AttendanceSession $attendanceSession)
     {
+        $user = auth()->user();
+        if (!$user->isSuperAdmin() && $attendanceSession->tenant_id !== $user->tenant_id) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
         try {
             DB::beginTransaction();
 

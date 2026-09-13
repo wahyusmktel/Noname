@@ -439,6 +439,26 @@ const submitAttendance = async () => {
                             <span class="text-[11px] font-semibold text-slate-400">Langkah 1</span>
                         </div>
 
+                        <!-- Profil Guru Pengampu -->
+                        <div class="flex items-center gap-3 p-3.5 bg-gradient-to-r from-orange-50/80 to-amber-50/50 rounded-2xl border border-orange-200/60 shadow-2xs">
+                            <div class="h-11 w-11 rounded-full ring-2 ring-orange-500/30 bg-orange-100 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                                <img
+                                    v-if="props.tentor.photo_url"
+                                    :src="props.tentor.photo_url"
+                                    :alt="props.tentor.name"
+                                    class="h-full w-full object-cover"
+                                />
+                                <span v-else class="text-orange-700 font-black text-sm">{{ props.tentor.name.charAt(0).toUpperCase() }}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <h3 class="text-xs font-bold text-slate-900 truncate">{{ props.tentor.name }}</h3>
+                                    <span class="px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 text-[10px] font-bold shrink-0">Tentor</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 truncate mt-0.5">{{ props.tentor.specialization || 'Guru / Tutor Bimbel' }}</p>
+                            </div>
+                        </div>
+
                         <!-- 1. Tanggal Pertemuan -->
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">

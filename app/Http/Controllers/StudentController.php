@@ -196,6 +196,14 @@ class StudentController extends Controller
                 'status'           => $validated['status'] ?? $student->status,
             ]);
 
+            // Sinkronkan ke akun User terkait jika sudah ada akun login
+            if ($student->user_id) {
+                User::where('id', $student->user_id)->update([
+                    'name'   => $student->name,
+                    'avatar' => $photoPath,
+                ]);
+            }
+
             DB::commit();
 
             return back()->with('success', 'Data peserta didik berhasil diperbarui!');
@@ -577,6 +585,7 @@ class StudentController extends Controller
                     'email'     => null,
                     'password'  => $plainPassword, // User model 'password' => 'hashed' cast
                     'role'      => 'siswa',
+                    'avatar'    => $student->photo,
                     'status'    => 'active',
                 ]);
 
@@ -640,6 +649,7 @@ class StudentController extends Controller
                     'email'     => null,
                     'password'  => $newPassword,
                     'role'      => 'siswa',
+                    'avatar'    => $student->photo,
                     'status'    => 'active',
                 ]);
 
@@ -652,7 +662,9 @@ class StudentController extends Controller
                 $user = User::find($student->user_id);
                 if ($user) {
                     $user->update([
+                        'name'     => $student->name,
                         'password' => $newPassword,
+                        'avatar'   => $user->avatar ?: $student->photo,
                     ]);
                 }
                 $student->update([

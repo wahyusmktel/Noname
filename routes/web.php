@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendance/manual', [\App\Http\Controllers\ManualAttendanceController::class, 'index'])->name('attendance.manual');
         Route::post('/attendance/manual', [\App\Http\Controllers\ManualAttendanceController::class, 'store'])->name('attendance.manual.store');
         Route::delete('/attendance/manual/{attendanceSession}', [\App\Http\Controllers\ManualAttendanceController::class, 'destroy'])->name('attendance.manual.destroy');
+        Route::delete('/attendance-sessions/{attendanceSession}', [\App\Http\Controllers\ManualAttendanceController::class, 'destroy'])->name('attendance-sessions.destroy');
 
         // Modul Laporan & Rekapitulasi Kehadiran Peserta Didik
         Route::get('/reports/student-attendance', [\App\Http\Controllers\StudentAttendanceReportController::class, 'index'])->name('reports.student-attendance');

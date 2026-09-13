@@ -56,8 +56,21 @@ class User extends Authenticatable
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
             get: function () {
-                if ($this->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->avatar)) {
-                    return \Illuminate\Support\Facades\Storage::disk('public')->url($this->avatar);
+                $avatar = $this->avatar;
+                if (!$avatar && $this->relationLoaded('tentor') && $this->tentor) {
+                    $avatar = $this->tentor->photo;
+                } elseif (!$avatar && $this->tentor) {
+                    $avatar = $this->tentor->photo;
+                }
+
+                if (!$avatar && $this->relationLoaded('student') && $this->student) {
+                    $avatar = $this->student->photo;
+                } elseif (!$avatar && $this->student) {
+                    $avatar = $this->student->photo;
+                }
+
+                if ($avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($avatar)) {
+                    return \Illuminate\Support\Facades\Storage::disk('public')->url($avatar);
                 }
                 return null;
             }

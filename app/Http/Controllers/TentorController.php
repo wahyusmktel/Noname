@@ -193,6 +193,14 @@ class TentorController extends Controller
                 'status'         => $validated['status'] ?? $tentor->status,
             ]);
 
+            // Sinkronkan ke akun User terkait jika sudah memiliki akun login
+            if ($tentor->user_id) {
+                User::where('id', $tentor->user_id)->update([
+                    'name'   => $tentor->full_name,
+                    'avatar' => $photoPath,
+                ]);
+            }
+
             DB::commit();
 
             return back()->with('success', 'Data tentor berhasil diperbarui!');
@@ -263,6 +271,7 @@ class TentorController extends Controller
                     'email'     => $tentor->email ?: null,
                     'password'  => $plainPassword,
                     'role'      => 'tutor',
+                    'avatar'    => $tentor->photo,
                     'status'    => 'active',
                 ]);
 
@@ -315,6 +324,7 @@ class TentorController extends Controller
                     'email'     => $tentor->email ?: null,
                     'password'  => $newPassword,
                     'role'      => 'tutor',
+                    'avatar'    => $tentor->photo,
                     'status'    => 'active',
                 ]);
 
@@ -327,7 +337,9 @@ class TentorController extends Controller
                 $user = User::find($tentor->user_id);
                 if ($user) {
                     $user->update([
+                        'name'     => $tentor->full_name,
                         'password' => $newPassword,
+                        'avatar'   => $user->avatar ?: $tentor->photo,
                     ]);
                 }
                 $tentor->update([

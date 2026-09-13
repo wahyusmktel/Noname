@@ -26,8 +26,10 @@ import {
     Clock,
     Mail,
     Award,
-    Layers
+    Layers,
+    Trash2
 } from 'lucide-vue-next';
+import { toast, confirmAction } from '@/composables/useNotification';
 
 interface SessionHistoryItem {
     id: string;
@@ -223,6 +225,30 @@ const openPhotoModal = (url: string, title: string) => {
 const closePhotoModal = () => {
     previewPhotoUrl.value = null;
     previewPhotoTitle.value = '';
+};
+
+// ==========================================
+// HAPUS SESI PRESENSI (KHUSUS ADMIN)
+// ==========================================
+const deleteSession = async (session: any) => {
+    const confirmed = await confirmAction({
+        title: 'Hapus Sesi Presensi?',
+        text: `Data sesi presensi mata pelajaran "${session.subject_name}" (${session.tentor_name}) tanggal ${session.formatted_date} akan dihapus. Seluruh catatan kehadiran siswa pada sesi ini akan masuk ke arsip (soft delete).`,
+        confirmButtonText: 'Ya, Hapus Sesi',
+        confirmText: 'Ya, Hapus Sesi',
+        icon: 'warning',
+    });
+
+    if (!confirmed) return;
+
+    router.delete(`/attendance-sessions/${session.id}`, {
+        onSuccess: () => {
+            toast('Data sesi presensi berhasil dihapus.', 'success');
+        },
+        onError: (err: any) => {
+            toast(err.general || 'Gagal menghapus data sesi presensi.', 'error');
+        },
+    });
 };
 
 // Opsi SearchableSelect untuk Mata Pelajaran / Spesialisasi
@@ -939,6 +965,7 @@ const maxTutorSessions = computed(() => {
                                     <th class="py-3 px-4 text-center">Presensi Siswa</th>
                                     <th class="py-3 px-4 text-center">Dokumentasi</th>
                                     <th class="py-3 px-4 text-center">Status Sesi</th>
+                                    <th class="py-3 px-4 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -1005,10 +1032,21 @@ const maxTutorSessions = computed(() => {
                                             Terlaksana & Hadir
                                         </span>
                                     </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button
+                                            type="button"
+                                            @click="deleteSession(session)"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 rounded-lg text-xs font-semibold shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                            title="Hapus Sesi Presensi"
+                                        >
+                                            <Trash2 class="h-3.5 w-3.5" />
+                                            <span>Hapus</span>
+                                        </button>
+                                    </td>
                                 </tr>
 
                                 <tr v-if="!paginatedSessions.length">
-                                    <td colspan="9" class="py-12 text-center text-slate-400">
+                                    <td colspan="10" class="py-12 text-center text-slate-400">
                                         <CalendarCheck class="h-8 w-8 mx-auto text-slate-300 mb-2" />
                                         <p class="text-sm font-medium">Tidak ada log sesi pertemuan yang cocok dengan filter yang dipilih.</p>
                                     </td>

@@ -281,4 +281,55 @@ class ManualAttendanceTest extends TestCase
             'id' => $session->id,
         ]);
     }
+
+    public function test_admin_can_delete_via_attendance_sessions_route(): void
+    {
+        $session = AttendanceSession::create([
+            'tenant_id'         => $this->tenant->id,
+            'academic_year_id'  => $this->academicYear->id,
+            'study_group_id'    => $this->studyGroup->id,
+            'tentor_id'         => $this->tentor->id,
+            'date'              => '2026-09-11',
+            'subject_name'      => 'Fisika Kuantum',
+            'topic_description' => 'Materi Dualisme Gelombang Partikel',
+            'status'            => 'closed',
+        ]);
+
+        $response = $this->actingAs($this->adminUser)
+            ->delete(route('attendance-sessions.destroy', $session));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Data sesi presensi berhasil dihapus.');
+
+        $this->assertSoftDeleted('attendance_sessions', [
+            'id' => $session->id,
+        ]);
+    }
+
+    public function test_user_avatar_url_falls_back_to_tentor_photo(): void
+    {
+        Storage::disk('public')->put('tentors/test_avatar.jpg', 'dummy image content');
+
+        $tutorUser = User::create([
+            'tenant_id' => $this->tenant->id,
+            'name'      => 'Guru Hadijah',
+            'username'  => 'hadijah',
+            'email'     => 'hadijah@bimbelnoname.com',
+            'password'  => 'password123',
+            'role'      => 'tutor',
+            'avatar'    => null, // avatar on user is null
+            'status'    => 'active',
+        ]);
+
+        $tentor = Tentor::create([
+            'tenant_id'      => $this->tenant->id,
+            'user_id'        => $tutorUser->id,
+            'name'           => 'Hadijah S.Pd',
+            'photo'          => 'tentors/test_avatar.jpg',
+            'status'         => 'active',
+        ]);
+
+        $this->assertNotNull($tutorUser->avatar_url);
+        $this->assertStringContainsString('tentors/test_avatar.jpg', $tutorUser->avatar_url);
+    }
 }

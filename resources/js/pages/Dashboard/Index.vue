@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {
     Users,
@@ -21,7 +21,9 @@ import {
     Layers,
     UserCheck,
     AlertCircle,
+    Trash2,
 } from 'lucide-vue-next';
+import { toast, confirmAction } from '@/composables/useNotification';
 
 interface Props {
     stats: {
@@ -93,6 +95,27 @@ const getStatusBadge = (status: string) => {
         default:
             return { label: status, class: 'bg-slate-50 text-slate-700 border-slate-200' };
     }
+};
+
+const deleteRecentSession = async (sess: any) => {
+    const confirmed = await confirmAction({
+        title: 'Hapus Sesi Presensi?',
+        text: `Data sesi presensi kelas "${sess.class_name}" (${sess.subject}) tanggal ${sess.formatted_date} akan dihapus (soft delete). Catatan presensi siswa di sesi ini akan ikut terhapus.`,
+        confirmButtonText: 'Ya, Hapus Sesi',
+        confirmText: 'Ya, Hapus Sesi',
+        icon: 'warning',
+    });
+
+    if (!confirmed) return;
+
+    router.delete(`/attendance-sessions/${sess.id}`, {
+        onSuccess: () => {
+            toast('Data sesi presensi berhasil dihapus.', 'success');
+        },
+        onError: (err: any) => {
+            toast(err.general || 'Gagal menghapus data sesi presensi.', 'error');
+        },
+    });
 };
 </script>
 
@@ -317,6 +340,16 @@ const getStatusBadge = (status: string) => {
 
                         <div class="pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500 font-medium">
                             <span class="truncate">Tutor: <strong class="text-slate-700">{{ sess.tutor_name }}</strong></span>
+                            <button
+                                v-if="$page.props.auth.user.role === 'admin_bimbel' || $page.props.auth.user.role === 'superadmin'"
+                                type="button"
+                                @click="deleteRecentSession(sess)"
+                                class="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded-lg transition active:scale-95 cursor-pointer shrink-0"
+                                title="Hapus Sesi Presensi"
+                            >
+                                <Trash2 class="h-3.5 w-3.5" />
+                                <span>Hapus</span>
+                            </button>
                         </div>
                     </div>
                 </div>

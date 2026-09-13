@@ -26,8 +26,10 @@ import {
     Camera,
     Sparkles,
     CheckCircle2,
-    Clock
+    Clock,
+    Trash2
 } from 'lucide-vue-next';
+import { toast, confirmAction } from '@/composables/useNotification';
 
 interface StudentAttendanceDetail {
     session_id: string;
@@ -219,6 +221,30 @@ const openPhotoModal = (url: string, title: string) => {
 const closePhotoModal = () => {
     previewPhotoUrl.value = null;
     previewPhotoTitle.value = '';
+};
+
+// ==========================================
+// HAPUS SESI PRESENSI (KHUSUS ADMIN)
+// ==========================================
+const deleteSession = async (session: SessionLog) => {
+    const confirmed = await confirmAction({
+        title: 'Hapus Sesi Presensi?',
+        text: `Data sesi presensi kelas "${session.study_group_name}" mata pelajaran "${session.subject_name}" tanggal ${session.formatted_date} akan dihapus. Seluruh presensi siswa di sesi ini akan masuk ke arsip (soft delete).`,
+        confirmButtonText: 'Ya, Hapus Sesi',
+        confirmText: 'Ya, Hapus Sesi',
+        icon: 'warning',
+    });
+
+    if (!confirmed) return;
+
+    router.delete(`/attendance-sessions/${session.id}`, {
+        onSuccess: () => {
+            toast('Data sesi presensi berhasil dihapus.', 'success');
+        },
+        onError: (err: any) => {
+            toast(err.general || 'Gagal menghapus data sesi presensi.', 'error');
+        },
+    });
 };
 
 // Kelompok bimbel yang disaring berdasarkan jenjang yang dipilih
@@ -995,6 +1021,7 @@ const donutSegments = computed(() => {
                                     <th class="py-3.5 px-4 text-center">Hadir / Total</th>
                                     <th class="py-3.5 px-4 text-center">% Kehadiran</th>
                                     <th class="py-3.5 px-4 text-center">Dokumentasi</th>
+                                    <th class="py-3.5 px-4 text-center w-24">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -1049,10 +1076,21 @@ const donutSegments = computed(() => {
                                         </button>
                                         <span v-else class="text-[11px] text-slate-400 italic">-</span>
                                     </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button
+                                            type="button"
+                                            @click="deleteSession(session)"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 text-[11px] font-semibold shadow-2xs transition active:scale-95 cursor-pointer"
+                                            title="Hapus Sesi Presensi"
+                                        >
+                                            <Trash2 class="w-3.5 h-3.5" />
+                                            <span>Hapus</span>
+                                        </button>
+                                    </td>
                                 </tr>
 
                                 <tr v-if="filteredSessions.length === 0">
-                                    <td colspan="8" class="py-12 text-center text-slate-400 italic">
+                                    <td colspan="9" class="py-12 text-center text-slate-400 italic">
                                         Belum ada riwayat sesi pertemuan kelas yang dicatat pada filter ini.
                                     </td>
                                 </tr>

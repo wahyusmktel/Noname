@@ -30,6 +30,7 @@ import {
     ShieldCheck,
     Database,
     Globe,
+    Server,
 } from 'lucide-vue-next';
 import { useNotification } from '@/composables/useNotification';
 
@@ -188,6 +189,12 @@ const navigationMenus = computed<MenuItem[]>(() => {
             title: 'Kelola Landing Page',
             icon: Globe,
             href: '/landing-page-settings',
+        },
+        {
+            id: 'dev_environment',
+            title: 'Kontrol Website Dev',
+            icon: Server,
+            href: '/system/dev-environment',
         },
         {
             id: 'manajemen_data',

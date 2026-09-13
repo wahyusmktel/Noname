@@ -41,6 +41,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/landing-page-settings', [\App\Http\Controllers\LandingPageSettingController::class, 'update'])->name('landing-settings.update');
     Route::post('/landing-page-settings/reset', [\App\Http\Controllers\LandingPageSettingController::class, 'resetDefaults'])->name('landing-settings.reset');
 
+    // Modul Kontrol Lingkungan Website Dev
+    Route::get('/system/dev-environment', [\App\Http\Controllers\DevEnvironmentController::class, 'index'])->name('system.dev-environment.index');
+    Route::post('/system/dev-environment/toggle', [\App\Http\Controllers\DevEnvironmentController::class, 'toggle'])->name('system.dev-environment.toggle');
+
     // Modul Tentor (Guru Bimbel)
     Route::post('/tentors/generate-accounts', [\App\Http\Controllers\TentorController::class, 'generateAccounts'])->name('tentors.generate-accounts');
     Route::get('/tentors/export-accounts', [\App\Http\Controllers\TentorController::class, 'exportAccounts'])->name('tentors.export-accounts');

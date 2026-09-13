@@ -178,6 +178,7 @@ class LandingPageSettingController extends Controller
             ]);
 
             // Bersihkan Cache
+            Cache::forget("tenant_landing_data_{$tenant->id}");
             Cache::forget("tenant_landing_{$tenant->id}");
             Cache::forget("tenant_landing_default");
 
@@ -226,6 +227,7 @@ class LandingPageSettingController extends Controller
 
             $setting->update($defaults);
 
+            Cache::forget("tenant_landing_data_{$tenant->id}");
             Cache::forget("tenant_landing_{$tenant->id}");
             Cache::forget("tenant_landing_default");
 

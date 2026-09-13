@@ -22,10 +22,21 @@ class LandingPageController extends Controller
 
         $defaults = TenantLandingSetting::getDefaults();
 
-        $landingSetting = null;
+        $settingData = null;
         if ($bimbel) {
-            $landingSetting = Cache::remember("tenant_landing_{$bimbel->id}", 3600, function () use ($bimbel) {
-                return $bimbel->landingSetting;
+            $settingData = Cache::remember("tenant_landing_data_{$bimbel->id}", 3600, function () use ($bimbel) {
+                $item = TenantLandingSetting::where('tenant_id', $bimbel->id)->first();
+                if (!$item) {
+                    return null;
+                }
+                return [
+                    'hero_slides'     => $item->hero_slides,
+                    'quality_header'  => $item->quality_header,
+                    'quality_items'   => $item->quality_items,
+                    'parent_cta'      => $item->parent_cta,
+                    'tentor_cta'      => $item->tentor_cta,
+                    'navbar_subtitle' => $item->navbar_subtitle,
+                ];
             });
         }
 
@@ -49,12 +60,12 @@ class LandingPageController extends Controller
         ];
 
         // Ambil data dinamis atau fallback ke standar bawaan
-        $slides         = ($landingSetting && !empty($landingSetting->hero_slides)) ? $landingSetting->hero_slides : $defaults['hero_slides'];
-        $qualityHeader  = ($landingSetting && !empty($landingSetting->quality_header)) ? $landingSetting->quality_header : $defaults['quality_header'];
-        $qualitySlides  = ($landingSetting && !empty($landingSetting->quality_items)) ? $landingSetting->quality_items : $defaults['quality_items'];
-        $parentCta      = ($landingSetting && !empty($landingSetting->parent_cta)) ? $landingSetting->parent_cta : $defaults['parent_cta'];
-        $tentorCta      = ($landingSetting && !empty($landingSetting->tentor_cta)) ? $landingSetting->tentor_cta : $defaults['tentor_cta'];
-        $navbarSubtitle = ($landingSetting && !empty($landingSetting->navbar_subtitle)) ? $landingSetting->navbar_subtitle : $defaults['navbar_subtitle'];
+        $slides         = ($settingData && !empty($settingData['hero_slides'])) ? $settingData['hero_slides'] : $defaults['hero_slides'];
+        $qualityHeader  = ($settingData && !empty($settingData['quality_header'])) ? $settingData['quality_header'] : $defaults['quality_header'];
+        $qualitySlides  = ($settingData && !empty($settingData['quality_items'])) ? $settingData['quality_items'] : $defaults['quality_items'];
+        $parentCta      = ($settingData && !empty($settingData['parent_cta'])) ? $settingData['parent_cta'] : $defaults['parent_cta'];
+        $tentorCta      = ($settingData && !empty($settingData['tentor_cta'])) ? $settingData['tentor_cta'] : $defaults['tentor_cta'];
+        $navbarSubtitle = ($settingData && !empty($settingData['navbar_subtitle'])) ? $settingData['navbar_subtitle'] : $defaults['navbar_subtitle'];
 
         $stats = [];
         $programs = [];

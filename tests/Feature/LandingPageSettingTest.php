@@ -119,4 +119,28 @@ class LandingPageSettingTest extends TestCase
         $setting->refresh();
         $this->assertEquals('Standar Kualitas Bimbingan Belajar Modern', $setting->navbar_subtitle);
     }
+
+    public function test_landing_page_renders_successfully()
+    {
+        $tenant = Tenant::create([
+            'name'   => 'Bimbel No Name',
+            'slug'   => 'bimbel-no-name',
+            'phone'  => '081234567890',
+            'city'   => 'Jakarta Selatan',
+            'status' => 'active',
+        ]);
+
+        TenantLandingSetting::create([
+            'tenant_id'       => $tenant->id,
+            'navbar_subtitle' => 'Pusat Keunggulan Siswa',
+        ]);
+
+        // First hit (populates cache)
+        $response1 = $this->get('/');
+        $response1->assertStatus(200);
+
+        // Second hit (reads from cache, tests unserialize/cache retrieval)
+        $response2 = $this->get('/');
+        $response2->assertStatus(200);
+    }
 }

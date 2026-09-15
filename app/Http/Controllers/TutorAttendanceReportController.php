@@ -228,7 +228,7 @@ class TutorAttendanceReportController extends Controller
             'Jenjang',
             'Topik / Materi Pembelajaran',
             'Jumlah Siswa Hadir',
-            'Jumlah Siswa Alpa',
+            'Jumlah Siswa Tidak Hadir',
             'Total Siswa',
             'Kehadiran Siswa (%)'
         ];

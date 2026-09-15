@@ -170,7 +170,7 @@ class ManualAttendanceTest extends TestCase
                 [
                     'student_id' => $this->student2->id,
                     'status'     => 'absent',
-                    'notes'      => 'Tidak hadir / alpa',
+                    'notes'      => 'Tidak hadir',
                 ],
             ],
         ];

@@ -123,7 +123,7 @@ class StudentAttendanceReportController extends Controller
             'Kelompok Bimbel',
             'Total Pertemuan',
             'Hadir',
-            'Tidak Hadir (Alpa)',
+            'Tidak Hadir',
             '% Kehadiran',
             'Status Evaluasi'
         ];
@@ -275,7 +275,7 @@ class StudentAttendanceReportController extends Controller
             'Tentor Pengampu',
             'Materi / Topik Pembelajaran',
             'Jumlah Hadir',
-            'Jumlah Alpa',
+            'Jumlah Tidak Hadir',
             'Tingkat Kehadiran (%)'
         ];
         $sessionCols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
@@ -657,9 +657,9 @@ class StudentAttendanceReportController extends Controller
         $sheet->mergeCells("D{$startRow}:E{$startRow}");
         $sheet->mergeCells("D" . ($startRow + 1) . ":E" . ($startRow + 1));
 
-        // Kotak 3: Total Alpa
-        $sheet->setCellValue('G' . $startRow, 'TOTAL KETIDAKHADIRAN (ALPA)');
-        $sheet->setCellValue('G' . ($startRow + 1), $kpi['total_absent'] . ' Alpa');
+        // Kotak 3: Total Tidak Hadir
+        $sheet->setCellValue('G' . $startRow, 'TOTAL TIDAK HADIR');
+        $sheet->setCellValue('G' . ($startRow + 1), $kpi['total_absent'] . ' Tidak Hadir');
         $sheet->mergeCells("G{$startRow}:H{$startRow}");
         $sheet->mergeCells("G" . ($startRow + 1) . ":H" . ($startRow + 1));
 

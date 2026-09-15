@@ -1010,7 +1010,7 @@ const maxTutorSessions = computed(() => {
                                                 {{ session.present_count }} Hadir
                                             </span>
                                             <span v-if="session.absent_count > 0" class="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-md">
-                                                {{ session.absent_count }} Alpa
+                                                {{ session.absent_count }} Tidak Hadir
                                             </span>
                                         </div>
                                     </td>

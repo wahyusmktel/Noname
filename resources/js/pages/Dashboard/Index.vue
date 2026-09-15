@@ -91,7 +91,7 @@ const getStatusBadge = (status: string) => {
         case 'excused':
             return { label: 'Izin', class: 'bg-blue-50 text-blue-700 border-blue-200' };
         case 'absent':
-            return { label: 'Alpa', class: 'bg-rose-50 text-rose-700 border-rose-200' };
+            return { label: 'Tidak Hadir', class: 'bg-rose-50 text-rose-700 border-rose-200' };
         default:
             return { label: status, class: 'bg-slate-50 text-slate-700 border-slate-200' };
     }

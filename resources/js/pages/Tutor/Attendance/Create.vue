@@ -731,7 +731,7 @@ const submitAttendance = async () => {
                                     title="Tandai semua siswa tidak hadir"
                                 >
                                     <UserX class="w-3.5 h-3.5" />
-                                    <span>Semua Alpa</span>
+                                    <span>Semua Tidak Hadir</span>
                                 </button>
                             </div>
                         </div>

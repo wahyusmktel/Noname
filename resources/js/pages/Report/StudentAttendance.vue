@@ -565,12 +565,12 @@ const donutSegments = computed(() => {
                     </div>
                 </div>
 
-                <!-- Total Ketidakhadiran (Alpa) -->
+                <!-- Total Ketidakhadiran (Tidak Hadir) -->
                 <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
                     <div>
                         <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Ketidakhadiran</p>
                         <p class="text-2xl font-bold text-rose-600 mt-1">{{ kpi.total_absent }}</p>
-                        <p class="text-[11px] text-slate-500 mt-0.5">Alpa / tanpa keterangan</p>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Tidak hadir / tanpa keterangan</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center">
                         <UserX class="w-6 h-6" />
@@ -1198,7 +1198,7 @@ const donutSegments = computed(() => {
                                     <th class="py-3.5 px-4">Jenjang & Kelompok</th>
                                     <th class="py-3.5 px-4 text-center">Total Sesi</th>
                                     <th class="py-3.5 px-4 text-center">Hadir</th>
-                                    <th class="py-3.5 px-4 text-center">Alpa</th>
+                                    <th class="py-3.5 px-4 text-center">Tidak Hadir</th>
                                     <th class="py-3.5 px-4 text-center w-40">% Kehadiran</th>
                                     <th class="py-3.5 px-4 text-center">Evaluasi Status</th>
                                     <th class="py-3.5 px-4 text-center w-24">Aksi</th>
@@ -1403,7 +1403,7 @@ const donutSegments = computed(() => {
                             <span class="font-bold text-emerald-700 text-base mt-0.5 block">{{ selectedStudentForModal.present_count }}</span>
                         </div>
                         <div class="p-3 rounded-2xl bg-rose-50 border border-rose-100 text-center">
-                            <span class="text-rose-600 block text-[10px] uppercase font-semibold">Alpa</span>
+                            <span class="text-rose-600 block text-[10px] uppercase font-semibold">Tidak Hadir</span>
                             <span class="font-bold text-rose-700 text-base mt-0.5 block">{{ selectedStudentForModal.absent_count }}</span>
                         </div>
                         <div class="p-3 rounded-2xl bg-orange-50 border border-orange-100 text-center">

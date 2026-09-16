@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import SearchableSelect, { type SelectOption } from '@/components/UI/SearchableSelect.vue';
@@ -24,6 +24,8 @@ import {
     History,
     CheckCheck,
     UserX,
+    SwitchCamera,
+    Smartphone,
 } from 'lucide-vue-next';
 import { useNotification } from '@/composables/useNotification';
 
@@ -205,31 +207,165 @@ const absentCount = computed(() => studentsList.value.filter(s => s.status === '
 const unselectedCount = computed(() => studentsList.value.filter(s => !s.status).length);
 
 // ==========================================
-// CLIENT-SIDE AUTO-COMPRESS PHOTO UPLOAD
+// CLIENT-SIDE AUTO-COMPRESS PHOTO & CAMERA
 // ==========================================
 const fileInput = ref<HTMLInputElement | null>(null);
+const fallbackFileInput = ref<HTMLInputElement | null>(null);
 const photoPreview = ref<string | null>(null);
 const isCompressing = ref(false);
 const compressionStats = ref<{ originalSize: number; compressedSize: number } | null>(null);
 
-const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+// WebRTC Live Camera State (Webcam / Laptop)
+const isCameraModalOpen = ref(false);
+const videoRef = ref<HTMLVideoElement | null>(null);
+const cameraStream = ref<MediaStream | null>(null);
+const cameraFacingMode = ref<'user' | 'environment'>('environment');
+const isCameraLoading = ref(false);
+const cameraError = ref<string | null>(null);
+const isShutterTriggered = ref(false);
+
+const isMobileDevice = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent));
 };
 
-const handlePhotoSelect = async (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
+// Fungsi utama ketika area foto / tombol ambil foto diklik
+const openCamera = () => {
+    if (isMobileDevice()) {
+        // Pada perangkat HP, capture="environment" langsung mengaktifkan kamera HP
+        triggerNativeCamera();
+    } else {
+        // Pada Laptop / PC, buka modal live camera webcam
+        openWebcamModal();
+    }
+};
 
+const triggerNativeCamera = () => {
+    if (fileInput.value) {
+        fileInput.value.click();
+    }
+};
+
+const openWebcamModal = async () => {
+    isCameraModalOpen.value = true;
+    cameraError.value = null;
+    await startCameraStream();
+};
+
+const startCameraStream = async () => {
+    isCameraLoading.value = true;
+    cameraError.value = null;
+
+    stopCameraStream();
+
+    try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Browser Anda tidak mendukung akses kamera WebRTC.');
+        }
+
+        const constraints: MediaStreamConstraints = {
+            audio: false,
+            video: {
+                facingMode: { ideal: cameraFacingMode.value },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            },
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        cameraStream.value = stream;
+
+        if (videoRef.value) {
+            videoRef.value.srcObject = stream;
+            await videoRef.value.play();
+        }
+    } catch (err: any) {
+        console.error('Camera error:', err);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            cameraError.value = 'Izin akses kamera ditolak. Silakan izinkan akses kamera di ikon gembok browser Anda.';
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+            cameraError.value = 'Perangkat kamera/webcam tidak terdeteksi pada laptop/komputer ini.';
+        } else {
+            cameraError.value = err.message || 'Gagal mengakses kamera laptop.';
+        }
+    } finally {
+        isCameraLoading.value = false;
+    }
+};
+
+const stopCameraStream = () => {
+    if (cameraStream.value) {
+        cameraStream.value.getTracks().forEach((track) => track.stop());
+        cameraStream.value = null;
+    }
+    if (videoRef.value) {
+        videoRef.value.srcObject = null;
+    }
+};
+
+const closeCameraModal = () => {
+    stopCameraStream();
+    isCameraModalOpen.value = false;
+    cameraError.value = null;
+};
+
+const switchCamera = async () => {
+    cameraFacingMode.value = cameraFacingMode.value === 'environment' ? 'user' : 'environment';
+    await startCameraStream();
+};
+
+// Ambil foto dari live video feed webcam
+const captureWebcamSnapshot = async () => {
+    if (!videoRef.value || !cameraStream.value) return;
+
+    isShutterTriggered.value = true;
+    setTimeout(() => {
+        isShutterTriggered.value = false;
+    }, 200);
+
+    try {
+        const video = videoRef.value;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 1280;
+        canvas.height = video.videoHeight || 720;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Gagal inisialisasi context canvas.');
+
+        // Render frame video saat ini ke canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas ke blob/File
+        const blob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, 'image/jpeg', 0.92)
+        );
+
+        if (!blob) throw new Error('Gagal mengambil gambar dari kamera.');
+
+        const fileName = `dokumentasi_${Date.now()}.jpg`;
+        const capturedFile = new File([blob], fileName, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+        });
+
+        // Hentikan kamera dan tutup modal
+        closeCameraModal();
+
+        // Kompresi hasil foto
+        await processPhotoFile(capturedFile);
+    } catch (err: any) {
+        toast('Gagal mengambil foto dari kamera: ' + (err.message || 'Error'), 'error');
+    }
+};
+
+const processPhotoFile = async (file: File) => {
     // Maksimal 10MB
     const maxSizeBytes = 10 * 1024 * 1024;
     if (file.size > maxSizeBytes) {
         toast('Ukuran berkas foto melebihi batas 10MB.', 'error');
         if (fileInput.value) fileInput.value.value = '';
+        if (fallbackFileInput.value) fallbackFileInput.value.value = '';
         return;
     }
 
@@ -243,15 +379,33 @@ const handlePhotoSelect = async (event: Event) => {
             originalSize: file.size,
             compressedSize: compressedResult.compressedFile.size,
         };
-        toast('Foto dokumentasi berhasil dikompresi otomatis!', 'success');
+        toast('Foto dokumentasi kelas berhasil diambil!', 'success');
     } catch (error) {
-        // Fallback jika canvas kompresi gagal, gunakan file asli
         form.documentation_photo = file;
         photoPreview.value = URL.createObjectURL(file);
         compressionStats.value = null;
     } finally {
         isCompressing.value = false;
     }
+};
+
+const handlePhotoSelect = async (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (!file) return;
+    await processPhotoFile(file);
+};
+
+onBeforeUnmount(() => {
+    stopCameraStream();
+});
+
+const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
 const compressImageFile = (file: File): Promise<{ compressedFile: File; previewUrl: string }> => {
@@ -312,6 +466,7 @@ const removePhoto = () => {
     photoPreview.value = null;
     compressionStats.value = null;
     if (fileInput.value) fileInput.value.value = '';
+    if (fallbackFileInput.value) fallbackFileInput.value.value = '';
 };
 
 // ==========================================
@@ -593,7 +748,7 @@ const submitAttendance = async () => {
                             <p v-if="form.errors.topic_description" class="text-xs text-rose-500 mt-1">{{ form.errors.topic_description }}</p>
                         </div>
 
-                        <!-- 7. Upload Foto Dokumentasi (Auto Compress s.d 10MB) -->
+                        <!-- 7. Ambil Foto Dokumentasi (Kamera HP / Webcam Laptop & Auto Compress) -->
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="block text-xs font-bold text-slate-700">
@@ -604,34 +759,66 @@ const submitAttendance = async () => {
                                 </span>
                             </div>
 
-                            <!-- Input File Hidden -->
+                            <!-- Input File Hidden dengan capture="environment" untuk langsung meluncurkan kamera HP -->
                             <input
                                 ref="fileInput"
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                class="hidden"
+                                @change="handlePhotoSelect"
+                            />
+
+                            <!-- Input File Cadangan untuk upload berkas dari disk jika kamera tidak tersedia -->
+                            <input
+                                ref="fallbackFileInput"
                                 type="file"
                                 accept="image/*"
                                 class="hidden"
                                 @change="handlePhotoSelect"
                             />
 
-                            <!-- Upload Box / Preview -->
+                            <!-- Upload Box / Tombol Buka Kamera -->
                             <div v-if="!photoPreview" class="relative">
-                                <button
-                                    type="button"
-                                    @click="fileInput?.click()"
-                                    :disabled="isCompressing"
-                                    class="w-full border-2 border-dashed border-slate-200 hover:border-orange-400 rounded-2xl p-4 text-center transition-all bg-slate-50/60 hover:bg-orange-50/30 flex flex-col items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                <div
+                                    @click="openCamera"
+                                    class="w-full border-2 border-dashed border-orange-200 hover:border-orange-400 rounded-2xl p-5 text-center transition-all bg-orange-50/20 hover:bg-orange-50/50 flex flex-col items-center justify-center gap-2 cursor-pointer group"
                                 >
-                                    <div class="w-10 h-10 rounded-xl bg-orange-100/80 text-orange-600 flex items-center justify-center">
-                                        <Camera v-if="!isCompressing" class="w-5 h-5" />
-                                        <Loader2 v-else class="w-5 h-5 animate-spin" />
+                                    <div class="w-12 h-12 rounded-2xl bg-orange-500 text-white shadow-lg shadow-orange-500/30 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                        <Camera v-if="!isCompressing" class="w-6 h-6" />
+                                        <Loader2 v-else class="w-6 h-6 animate-spin" />
                                     </div>
-                                    <p class="text-xs font-bold text-slate-700">
-                                        {{ isCompressing ? 'Sedang Mengompres Foto...' : 'Ambil Foto atau Pilih Gambar' }}
-                                    </p>
-                                    <p class="text-[10px] text-slate-400">
-                                        Maks. 10MB. Foto langsung di-kompres otomatis menjadi ringan sebelum diunggah.
-                                    </p>
-                                </button>
+
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800">
+                                            {{ isCompressing ? 'Sedang Memproses Foto...' : 'Buka Kamera & Ambil Foto Kelas' }}
+                                        </p>
+                                        <p class="text-[11px] text-slate-500 mt-0.5">
+                                            Otomatis membuka <span class="font-semibold text-orange-600">Kamera HP</span> di ponsel atau <span class="font-semibold text-orange-600">Webcam</span> di laptop
+                                        </p>
+                                    </div>
+
+                                    <!-- Action buttons -->
+                                    <div class="flex items-center gap-2 mt-1" @click.stop>
+                                        <button
+                                            type="button"
+                                            @click="openCamera"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-bold shadow-xs transition-colors cursor-pointer"
+                                        >
+                                            <Camera class="w-3.5 h-3.5" />
+                                            Buka Kamera Langsung
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="fallbackFileInput?.click()"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-medium transition-colors cursor-pointer"
+                                            title="Pilih foto dari berkas penyimpanan jika kamera terkendala"
+                                        >
+                                            <UploadCloud class="w-3 h-3" />
+                                            Pilih Berkas
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Photo Preview Box -->
@@ -639,27 +826,38 @@ const submitAttendance = async () => {
                                 <img
                                     :src="photoPreview"
                                     alt="Dokumentasi Kelas"
-                                    class="w-full h-44 object-cover object-center"
+                                    class="w-full h-48 object-cover object-center"
                                 />
 
-                                <!-- Floating info badge -->
-                                <div class="absolute bottom-2 left-2 right-2 bg-slate-900/85 backdrop-blur-xs text-white p-2 rounded-xl text-[11px] flex items-center justify-between">
+                                <!-- Floating info badge & actions -->
+                                <div class="absolute bottom-2 left-2 right-2 bg-slate-900/90 backdrop-blur-xs text-white p-2 rounded-xl text-[11px] flex items-center justify-between">
                                     <div class="flex items-center gap-1.5 truncate">
                                         <CheckCircle2 class="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                        <span v-if="compressionStats" class="font-mono">
+                                        <span v-if="compressionStats" class="font-mono text-[10px]">
                                             {{ formatBytes(compressionStats.originalSize) }} &rarr; <strong class="text-emerald-300">{{ formatBytes(compressionStats.compressedSize) }}</strong>
                                         </span>
-                                        <span v-else class="text-slate-300 truncate">Foto siap diunggah</span>
+                                        <span v-else class="text-slate-300 truncate text-[10px]">Foto siap diunggah</span>
                                     </div>
 
-                                    <button
-                                        @click="removePhoto"
-                                        type="button"
-                                        class="p-1 rounded-lg hover:bg-rose-500/80 text-white transition-colors cursor-pointer shrink-0"
-                                        title="Hapus Foto"
-                                    >
-                                        <X class="w-3.5 h-3.5" />
-                                    </button>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button
+                                            @click="openCamera"
+                                            type="button"
+                                            class="px-2 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                            title="Ambil foto ulang menggunakan kamera"
+                                        >
+                                            <Camera class="w-3 h-3" />
+                                            Foto Ulang
+                                        </button>
+                                        <button
+                                            @click="removePhoto"
+                                            type="button"
+                                            class="p-1 rounded-lg hover:bg-rose-500 text-white transition-colors cursor-pointer"
+                                            title="Hapus Foto"
+                                        >
+                                            <X class="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <p v-if="form.errors.documentation_photo" class="text-xs text-rose-500 mt-1">{{ form.errors.documentation_photo }}</p>
@@ -872,4 +1070,169 @@ const submitAttendance = async () => {
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- ========================================== -->
+    <!-- MODAL LIVE CAMERA VIEWFINDER (WEBCAM/HP)   -->
+    <!-- ========================================== -->
+    <Teleport to="body">
+        <div
+            v-if="isCameraModalOpen"
+            class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+            <div class="relative w-full max-w-xl bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 flex flex-col max-h-[92vh]">
+                <!-- Header Modal -->
+                <div class="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-white shrink-0">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></div>
+                        <h3 class="text-xs sm:text-sm font-bold tracking-wide flex items-center gap-1.5">
+                            <Camera class="w-4 h-4 text-orange-400" />
+                            Kamera Dokumentasi Kelas
+                        </h3>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <!-- Switch Front/Back Camera -->
+                        <button
+                            type="button"
+                            @click="switchCamera"
+                            class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors cursor-pointer"
+                            title="Ganti Kamera Depan / Belakang"
+                        >
+                            <SwitchCamera class="w-4 h-4" />
+                        </button>
+                        <!-- Close Button -->
+                        <button
+                            type="button"
+                            @click="closeCameraModal"
+                            class="p-1.5 rounded-xl bg-slate-800 hover:bg-rose-500 text-slate-200 hover:text-white transition-colors cursor-pointer"
+                            title="Tutup Kamera"
+                        >
+                            <X class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Camera Viewfinder / Video Area -->
+                <div class="relative flex-1 bg-black min-h-[320px] sm:min-h-[400px] flex items-center justify-center overflow-hidden">
+                    <!-- Video Stream Element -->
+                    <video
+                        ref="videoRef"
+                        autoplay
+                        playsinline
+                        muted
+                        class="w-full h-full object-cover"
+                    ></video>
+
+                    <!-- Shutter Flash Effect -->
+                    <div
+                        v-if="isShutterTriggered"
+                        class="absolute inset-0 bg-white z-20 pointer-events-none animate-out fade-out duration-200"
+                    ></div>
+
+                    <!-- Loading State -->
+                    <div
+                        v-if="isCameraLoading"
+                        class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center text-white gap-3 z-10"
+                    >
+                        <Loader2 class="w-8 h-8 text-orange-400 animate-spin" />
+                        <p class="text-xs font-semibold">Mengaktifkan kamera...</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div
+                        v-if="cameraError"
+                        class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center text-white p-6 text-center gap-3 z-10"
+                    >
+                        <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                            <AlertCircle class="w-6 h-6" />
+                        </div>
+                        <p class="text-xs font-bold text-rose-300 max-w-sm">{{ cameraError }}</p>
+                        <div class="flex flex-wrap items-center justify-center gap-2 mt-2">
+                            <button
+                                type="button"
+                                @click="startCameraStream"
+                                class="px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                            >
+                                Coba Lagi
+                            </button>
+                            <button
+                                type="button"
+                                @click="triggerNativeCamera(); closeCameraModal();"
+                                class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                            >
+                                Buka Kamera HP
+                            </button>
+                            <button
+                                type="button"
+                                @click="fallbackFileInput?.click(); closeCameraModal();"
+                                class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                            >
+                                Pilih Berkas
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Viewfinder Guides (Corner Marks) -->
+                    <div v-if="!isCameraLoading && !cameraError" class="absolute inset-6 sm:inset-10 pointer-events-none flex flex-col justify-between">
+                        <div class="flex justify-between">
+                            <div class="w-6 h-6 border-t-2 border-l-2 border-orange-400/80 rounded-tl-lg"></div>
+                            <div class="w-6 h-6 border-t-2 border-r-2 border-orange-400/80 rounded-tr-lg"></div>
+                        </div>
+                        <div class="flex justify-between">
+                            <div class="w-6 h-6 border-b-2 border-l-2 border-orange-400/80 rounded-bl-lg"></div>
+                            <div class="w-6 h-6 border-b-2 border-r-2 border-orange-400/80 rounded-br-lg"></div>
+                        </div>
+                    </div>
+
+                    <!-- Live Tag / Tip -->
+                    <div v-if="!isCameraLoading && !cameraError" class="absolute top-3 left-3 pointer-events-none">
+                        <span class="px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur-xs text-[10px] text-white font-medium flex items-center gap-1.5 border border-white/10">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            Live Kamera Aktif
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Footer Toolbar / Shutter Button -->
+                <div class="p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                    <!-- Mobile Camera Trigger button inside modal -->
+                    <button
+                        type="button"
+                        @click="triggerNativeCamera(); closeCameraModal();"
+                        class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1.5 cursor-pointer transition-colors"
+                        title="Gunakan aplikasi kamera bawaan perangkat"
+                    >
+                        <Smartphone class="w-3.5 h-3.5 text-orange-400" />
+                        <span class="hidden sm:inline">Kamera Bawaan HP</span>
+                    </button>
+
+                    <!-- Main Shutter Button -->
+                    <div class="flex items-center justify-center">
+                        <button
+                            type="button"
+                            @click="captureWebcamSnapshot"
+                            :disabled="isCameraLoading || !!cameraError"
+                            class="group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border-4 border-orange-500/40 hover:border-orange-500 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Jepret Foto Sekarang"
+                        >
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-500 group-hover:bg-orange-600 transition-colors flex items-center justify-center text-white">
+                                <Camera class="w-5 h-5 sm:w-6 sm:h-6" />
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Switch Camera Button on Right -->
+                    <button
+                        type="button"
+                        @click="switchCamera"
+                        class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1.5 cursor-pointer transition-colors"
+                        title="Putar Kamera Depan/Belakang"
+                    >
+                        <span class="hidden sm:inline">Putar Kamera</span>
+                        <SwitchCamera class="w-3.5 h-3.5 text-orange-400" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 </template>
